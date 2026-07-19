@@ -84,7 +84,7 @@ export const pt: Messages = {
   studio: {
     title: 'Estúdio',
     subtitle:
-      'Câmera + Hand Landmarker são módulos isolados. A UI só consome resultados — a IA nunca importa React.',
+      'Abra a câmera e use pinça + movimento para desenhar no AirCanvas. Os comandos de pose (mão aberta, punho, vitória) estão na lista abaixo.',
     help: 'Ajuda',
     session: 'sessão',
     camera: 'câmera',
@@ -122,17 +122,25 @@ export const pt: Messages = {
     actionEngineDesc:
       'Ações no padrão Command — canvas agora; Spotify, PowerPoint, VS Code e SO depois.',
     run: 'Executar',
-    gestureRecognitionTitle: 'Reconhecimento de gestos',
+    gestureRecognitionTitle: 'Comandos por gesto',
     gestureRecognitionDesc:
-      'Gestos nomeados com confiança + comandos do Action Engine.',
+      'Segure essas poses por um instante para disparar uma ação. Desenhar não está nesta lista — veja o guia abaixo.',
+    controlsGuideTitle: 'Como desenhar e apagar',
+    controlsGuideDraw:
+      'Desenhar: una polegar + indicador (pinça) e mova a mão. O estado deve ir para Desenhando.',
+    controlsGuideStop: 'Parar de desenhar: solte a pinça (volta para Hover).',
+    controlsGuideEraseStroke:
+      'Apagar traços: clique em Borracha no AirCanvas e depois pinça + mova.',
+    controlsGuideClearAll: 'Apagar tudo: mão aberta (ou o botão Limpar).',
+    commandsListTitle: 'Comandos de pose',
     lastMatch: 'Último reconhecimento',
     noneYet: 'Nenhum ainda',
     actionLog: 'Log de ações',
     actionLogEmpty:
-      'Tente mão aberta, punho, vitória ou um toque rápido de pinça.',
+      'Tente mão aberta, punho, vitória ou um toque rápido de pinça (sem arrastar).',
     airCanvasTitle: 'AirCanvas',
     airCanvasDesc:
-      'O desenho começa no estado Drawing e para no Hover. Pinça + movimento para pintar.',
+      'Pinta enquanto o estado for Desenhando (pinça + mover). Para ao soltar a pinça.',
     brush: 'Pincel',
     eraser: 'Borracha',
     clear: 'Limpar',
@@ -154,11 +162,18 @@ export const pt: Messages = {
     cameraRefTitle: 'Referência da câmera',
     cameraRefDesc: 'Overlay do esqueleto no feed ao vivo.',
     cameraRefBody:
-      'Use o preview acima para feedback do rastreamento. A tinta vai no AirCanvas — pinça e mova para entrar em Drawing.',
-    helpTitle: 'Ajuda do Estúdio',
-    helpDesc: 'Câmera → Visão → Gesto → Cursor → AirCanvas.',
-    helpBody:
-      'Faça pinça e arraste até o estado Drawing. O AirCanvas começa a pintar no cursor e para ao voltar para Hover. Use borracha, espessura, cor, limpar e Salvar PNG na barra.',
+      'Use o preview para acompanhar o rastreamento. Desenhe no AirCanvas com pinça + movimento.',
+    helpTitle: 'Como usar o Estúdio',
+    helpDesc: 'Guia rápido: desenhar, apagar e comandos de pose.',
+    helpDrawTitle: 'Desenhar',
+    helpDrawBody:
+      '1) Abra a câmera. 2) Una polegar + indicador. 3) Mova para pintar. 4) Solte para parar. O badge deve mostrar Desenhando enquanto pinta.',
+    helpEraseTitle: 'Apagar',
+    helpEraseBody:
+      'Borracha de traço: escolha Borracha e pinça + mova. Apagar tudo: mão aberta, ou Limpar.',
+    helpCommandsTitle: 'Comandos de pose',
+    helpCommandsBody:
+      'Mão aberta → apaga tudo. Punho ou toque rápido de pinça → troca cor. Vitória (V) → salva PNG. “Desenho iniciado” só registra no log quando o Drawing começa — não é o jeito de começar a pintar.',
     gotIt: 'Entendi',
     logRecognized: '{gesture} → {action}',
     logConfidence: '{gesture} · {confidence}%',
@@ -243,23 +258,32 @@ export const pt: Messages = {
   gesture: {
     'open-palm': {
       name: 'Mão aberta',
-      description: 'Limpa a superfície de desenho do AirCanvas.',
+      effect: 'Apaga tudo',
+      description:
+        'Como: abra a mão com a palma para a câmera. Efeito: apaga o desenho inteiro.',
     },
     fist: {
       name: 'Punho',
-      description: 'Cicla a cor do pincel.',
+      effect: 'Troca cor',
+      description: 'Como: feche a mão em punho. Efeito: cicla a cor do pincel.',
     },
     victory: {
       name: 'Vitória',
-      description: 'Salva o canvas como PNG.',
+      effect: 'Salva PNG',
+      description:
+        'Como: faça um V com indicador + médio. Efeito: baixa o canvas em PNG.',
     },
     'pinch-tap': {
       name: 'Toque de pinça',
-      description: 'Pinça rápida para trocar a cor do pincel.',
+      effect: 'Troca cor',
+      description:
+        'Como: pinça rápida sem arrastar. Efeito: cicla a cor (não desenha).',
     },
     'enter-drawing': {
-      name: 'Iniciar desenho',
-      description: 'Entrou no estado de interação Drawing.',
+      name: 'Desenho iniciado',
+      effect: 'Só no log',
+      description:
+        'Não é um comando. Dispara sozinho quando pinça + mover entra em Desenhando — serve para o log, não para começar a pintar.',
     },
   },
 }

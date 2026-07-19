@@ -20,8 +20,14 @@ import { useStudioGestureRecognition } from './useStudioGestureRecognition'
 import { useStudioHandVision } from './useStudioHandVision'
 
 export function StudioPage() {
-  const { t, actionName, actionDescription, gestureName, gestureDescription } =
-    useTranslation()
+  const {
+    t,
+    actionName,
+    actionDescription,
+    gestureName,
+    gestureDescription,
+    gestureEffect,
+  } = useTranslation()
   const sessionStatus = useSessionStore((state) => state.status)
   const mirrored = useSettingsStore((s) => s.mirrored)
   const showLandmarks = useSettingsStore((s) => s.showLandmarks)
@@ -421,80 +427,111 @@ export function StudioPage() {
         title={t('studio.gestureRecognitionTitle')}
         description={t('studio.gestureRecognitionDesc')}
       >
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(14rem,0.7fr)]">
-          <div className="space-y-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-ink-muted text-xs font-medium tracking-wide uppercase">
-                {t('studio.lastMatch')}
-              </span>
-              {recognizedGesture ? (
-                <>
-                  <Badge variant="accent">
-                    {gestureName(recognizedGesture.definition.id)}
-                  </Badge>
-                  <span className="text-ink-secondary text-sm">
-                    {(recognizedGesture.confidence * 100).toFixed(0)}% ·{' '}
-                    {recognizedGesture.definition.action}
-                  </span>
-                </>
-              ) : (
-                <span className="text-ink-muted text-sm">
-                  {t('studio.noneYet')}
-                </span>
-              )}
-            </div>
-
-            <ul className="space-y-2">
-              {gestureDefinitions.map((definition) => (
-                <li
-                  key={definition.id}
-                  className="border-border bg-surface-muted rounded-md border px-3 py-2"
-                >
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-ink text-sm font-medium">
-                      {gestureName(definition.id)}
-                    </p>
-                    <Badge variant="outline">{definition.action}</Badge>
-                    <span className="text-ink-muted text-xs">
-                      ≥ {(definition.confidence * 100).toFixed(0)}%
-                    </span>
-                  </div>
-                  <p className="text-ink-muted mt-1 text-xs">
-                    {gestureDescription(definition.id)}
-                  </p>
-                </li>
-              ))}
+        <div className="space-y-4">
+          <div className="border-accent/30 bg-accent-muted/40 space-y-2 rounded-md border px-4 py-3">
+            <p className="text-ink text-sm font-medium">
+              {t('studio.controlsGuideTitle')}
+            </p>
+            <ul className="text-ink-secondary list-disc space-y-1.5 pl-5 text-sm">
+              <li>{t('studio.controlsGuideDraw')}</li>
+              <li>{t('studio.controlsGuideStop')}</li>
+              <li>{t('studio.controlsGuideEraseStroke')}</li>
+              <li>{t('studio.controlsGuideClearAll')}</li>
             </ul>
           </div>
 
-          <div className="border-border bg-surface rounded-md border px-3 py-2">
-            <p className="text-ink-muted mb-2 text-xs font-medium tracking-wide uppercase">
-              {t('studio.actionLog')}
-            </p>
-            {gestureLog.length === 0 ? (
-              <p className="text-ink-subtle text-sm">
-                {t('studio.actionLogEmpty')}
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(14rem,0.7fr)]">
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-ink-muted text-xs font-medium tracking-wide uppercase">
+                  {t('studio.lastMatch')}
+                </span>
+                {recognizedGesture ? (
+                  <>
+                    <Badge variant="accent">
+                      {gestureName(recognizedGesture.definition.id)}
+                    </Badge>
+                    <span className="text-ink-secondary text-sm">
+                      {(recognizedGesture.confidence * 100).toFixed(0)}% ·{' '}
+                      {gestureEffect(recognizedGesture.definition.id) ||
+                        recognizedGesture.definition.action}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-ink-muted text-sm">
+                    {t('studio.noneYet')}
+                  </span>
+                )}
+              </div>
+
+              <p className="text-ink-muted text-xs font-medium tracking-wide uppercase">
+                {t('studio.commandsListTitle')}
               </p>
-            ) : (
-              <ul className="space-y-1">
-                {gestureLog.map((entry, index) => (
+
+              <ul className="space-y-2">
+                {gestureDefinitions.map((definition) => (
                   <li
-                    key={`${entry.kind}-${entry.gestureId}-${index}`}
-                    className="text-ink-secondary font-mono text-xs"
+                    key={definition.id}
+                    className="border-border bg-surface-muted rounded-md border px-3 py-2"
                   >
-                    {entry.kind === 'recognized'
-                      ? t('studio.logRecognized', {
-                          gesture: gestureName(entry.gestureId),
-                          action: entry.action,
-                        })
-                      : t('studio.logConfidence', {
-                          gesture: gestureName(entry.gestureId),
-                          confidence: (entry.confidence * 100).toFixed(0),
-                        })}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-ink text-sm font-medium">
+                        {gestureName(definition.id)}
+                      </p>
+                      <Badge
+                        variant={
+                          definition.id === 'enter-drawing'
+                            ? 'outline'
+                            : 'accent'
+                        }
+                      >
+                        {gestureEffect(definition.id)}
+                      </Badge>
+                      <span className="text-ink-muted text-xs">
+                        ≥ {(definition.confidence * 100).toFixed(0)}%
+                      </span>
+                    </div>
+                    <p className="text-ink-muted mt-1 text-xs">
+                      {gestureDescription(definition.id)}
+                    </p>
+                    <p className="text-ink-subtle mt-1 font-mono text-[11px]">
+                      {definition.action}
+                    </p>
                   </li>
                 ))}
               </ul>
-            )}
+            </div>
+
+            <div className="border-border bg-surface rounded-md border px-3 py-2">
+              <p className="text-ink-muted mb-2 text-xs font-medium tracking-wide uppercase">
+                {t('studio.actionLog')}
+              </p>
+              {gestureLog.length === 0 ? (
+                <p className="text-ink-subtle text-sm">
+                  {t('studio.actionLogEmpty')}
+                </p>
+              ) : (
+                <ul className="space-y-1">
+                  {gestureLog.map((entry, index) => (
+                    <li
+                      key={`${entry.kind}-${entry.gestureId}-${index}`}
+                      className="text-ink-secondary font-mono text-xs"
+                    >
+                      {entry.kind === 'recognized'
+                        ? t('studio.logRecognized', {
+                            gesture: gestureName(entry.gestureId),
+                            action:
+                              gestureEffect(entry.gestureId) || entry.action,
+                          })
+                        : t('studio.logConfidence', {
+                            gesture: gestureName(entry.gestureId),
+                            confidence: (entry.confidence * 100).toFixed(0),
+                          })}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
         </div>
       </Panel>
@@ -659,7 +696,22 @@ export function StudioPage() {
           </Button>
         }
       >
-        <p>{t('studio.helpBody')}</p>
+        <div className="space-y-4 text-sm">
+          <div className="space-y-1">
+            <p className="text-ink font-medium">{t('studio.helpDrawTitle')}</p>
+            <p className="text-ink-secondary">{t('studio.helpDrawBody')}</p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-ink font-medium">{t('studio.helpEraseTitle')}</p>
+            <p className="text-ink-secondary">{t('studio.helpEraseBody')}</p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-ink font-medium">
+              {t('studio.helpCommandsTitle')}
+            </p>
+            <p className="text-ink-secondary">{t('studio.helpCommandsBody')}</p>
+          </div>
+        </div>
       </Modal>
     </section>
   )

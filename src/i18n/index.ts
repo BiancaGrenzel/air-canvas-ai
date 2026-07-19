@@ -15,6 +15,7 @@ export {
   translateActionDescription,
   translateActionName,
   translateGestureDescription,
+  translateGestureEffect,
   translateGestureName,
 } from './translate'
 export type { TranslateParams } from './translate'

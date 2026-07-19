@@ -9,7 +9,11 @@ const catalogs: Record<AppLocale, Messages> = {
 
 export type TranslateParams = Record<string, string | number>
 
-type NamedCopy = { readonly name: string; readonly description: string }
+type NamedCopy = {
+  readonly name: string
+  readonly description: string
+  readonly effect?: string
+}
 
 function getByPath(source: unknown, path: string): unknown {
   return path.split('.').reduce<unknown>((current, segment) => {
@@ -78,4 +82,8 @@ export function translateGestureDescription(
   id: string,
 ): string {
   return lookupNamed(locale, 'gesture', id)?.description ?? id
+}
+
+export function translateGestureEffect(locale: AppLocale, id: string): string {
+  return lookupNamed(locale, 'gesture', id)?.effect ?? ''
 }

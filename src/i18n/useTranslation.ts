@@ -7,6 +7,7 @@ import {
   translateActionDescription,
   translateActionName,
   translateGestureDescription,
+  translateGestureEffect,
   translateGestureName,
   type TranslateParams,
 } from './translate'
@@ -25,6 +26,7 @@ export function useTranslation() {
       gestureName: (id: string) => translateGestureName(locale, id),
       gestureDescription: (id: string) =>
         translateGestureDescription(locale, id),
+      gestureEffect: (id: string) => translateGestureEffect(locale, id),
     }
   }, [locale])
 }
@@ -36,4 +38,5 @@ export type TranslationApi = {
   actionDescription: (id: string) => string
   gestureName: (id: string) => string
   gestureDescription: (id: string) => string
+  gestureEffect: (id: string) => string
 }

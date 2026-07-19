@@ -82,7 +82,7 @@ export const en = {
   studio: {
     title: 'Studio',
     subtitle:
-      'Camera + Hand Landmarker are isolated modules. UI only consumes results — AI never imports React.',
+      'Open the camera, then pinch + move to draw on AirCanvas. Pose commands (open palm, fist, victory) are listed below.',
     help: 'Help',
     session: 'session',
     camera: 'camera',
@@ -119,16 +119,25 @@ export const en = {
     actionEngineDesc:
       'Command Pattern actions — canvas now; Spotify, PowerPoint, VS Code, OS later.',
     run: 'Run',
-    gestureRecognitionTitle: 'Gesture Recognition',
+    gestureRecognitionTitle: 'Gesture commands',
     gestureRecognitionDesc:
-      'Named gestures with confidence + Action Engine commands.',
-    lastMatch: 'Last match',
+      'Hold these poses briefly to trigger an action. Drawing itself is not in this list — see the guide below.',
+    controlsGuideTitle: 'How to draw and erase',
+    controlsGuideDraw:
+      'Draw: pinch thumb + index finger, then move your hand. Watch for state Drawing.',
+    controlsGuideStop: 'Stop drawing: release the pinch (back to Hover).',
+    controlsGuideEraseStroke:
+      'Erase strokes: click Eraser on AirCanvas, then pinch + move like drawing.',
+    controlsGuideClearAll: 'Clear everything: open palm (or the Clear button).',
+    commandsListTitle: 'Pose commands',
+    lastMatch: 'Last recognition',
     noneYet: 'None yet',
     actionLog: 'Action log',
-    actionLogEmpty: 'Try open palm, fist, victory, or a quick pinch tap.',
+    actionLogEmpty:
+      'Try open palm, fist, victory, or a quick pinch tap (not a long drag).',
     airCanvasTitle: 'AirCanvas',
     airCanvasDesc:
-      'Drawing starts on Gesture state Drawing and stops on Hover. Pinch + move to ink.',
+      'Ink while state is Drawing (pinch + move). Stops when you release the pinch.',
     brush: 'Brush',
     eraser: 'Eraser',
     clear: 'Clear',
@@ -149,11 +158,18 @@ export const en = {
     cameraRefTitle: 'Camera reference',
     cameraRefDesc: 'Skeleton overlay on the live camera feed.',
     cameraRefBody:
-      'Use the camera preview above for tracking feedback. Ink is painted on the AirCanvas surface — pinch and move to enter Drawing.',
-    helpTitle: 'Studio help',
-    helpDesc: 'Camera → Vision → Gesture → Cursor → AirCanvas.',
-    helpBody:
-      'Pinch and drag to reach the Drawing state. AirCanvas starts inking at the cursor and stops when you return to Hover. Use eraser, thickness, color, clear, and Save PNG from the toolbar.',
+      'Use the camera preview for tracking. Draw on the AirCanvas below with pinch + move.',
+    helpTitle: 'How to use Studio',
+    helpDesc: 'Quick guide: draw, erase, and pose commands.',
+    helpDrawTitle: 'Drawing',
+    helpDrawBody:
+      '1) Open the camera. 2) Pinch thumb + index. 3) Move to paint. 4) Release to stop. The badge should show Drawing while you paint.',
+    helpEraseTitle: 'Erasing',
+    helpEraseBody:
+      'Stroke eraser: choose Eraser, then pinch + move. Wipe the whole canvas: open palm, or Clear.',
+    helpCommandsTitle: 'Pose commands',
+    helpCommandsBody:
+      'Open palm → clear all. Fist or quick pinch tap → change color. Victory (V) → save PNG. “Start Drawing” only logs when Drawing begins — it is not how you start painting.',
     gotIt: 'Got it',
     logRecognized: '{gesture} → {action}',
     logConfidence: '{gesture} · {confidence}%',
@@ -238,23 +254,33 @@ export const en = {
   gesture: {
     'open-palm': {
       name: 'Open Palm',
-      description: 'Clear the AirCanvas drawing surface.',
+      effect: 'Clear all',
+      description:
+        'How: open your hand, palm toward the camera. Effect: erases the entire drawing.',
     },
     fist: {
       name: 'Fist',
-      description: 'Cycle brush color.',
+      effect: 'Change color',
+      description:
+        'How: close your hand into a fist. Effect: cycles the brush color.',
     },
     victory: {
       name: 'Victory',
-      description: 'Save the canvas as PNG.',
+      effect: 'Save PNG',
+      description:
+        'How: make a V with index + middle fingers. Effect: downloads the canvas as PNG.',
     },
     'pinch-tap': {
       name: 'Pinch Tap',
-      description: 'Quick pinch to change brush color.',
+      effect: 'Change color',
+      description:
+        'How: pinch quickly without dragging. Effect: cycles brush color (not drawing).',
     },
     'enter-drawing': {
-      name: 'Start Drawing',
-      description: 'Entered the Drawing interaction state.',
+      name: 'Drawing started',
+      effect: 'Log only',
+      description:
+        'Not a command. Fires automatically when pinch + move enters Drawing — useful for the log, not to start painting.',
     },
   },
 } as const
