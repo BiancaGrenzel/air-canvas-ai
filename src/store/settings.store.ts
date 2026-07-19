@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
+import type { AppLocale } from '@/i18n/types'
 import { colors } from '@/shared/config'
 
 export type ThemePreference = 'light' | 'dark' | 'system'
@@ -15,6 +16,8 @@ export type AppSettings = {
   /** Brush color (CSS color string). */
   color: string
   theme: ThemePreference
+  /** UI language. */
+  locale: AppLocale
   /** Mirror camera / landmarks / cursor on X. */
   mirrored: boolean
   showLandmarks: boolean
@@ -27,6 +30,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   thickness: 4,
   color: colors.ink,
   theme: 'system',
+  locale: 'en',
   mirrored: true,
   showLandmarks: true,
   showFps: true,
@@ -46,6 +50,7 @@ type SettingsState = AppSettings & {
   setThickness: (thickness: number) => void
   setColor: (color: string) => void
   setTheme: (theme: ThemePreference) => void
+  setLocale: (locale: AppLocale) => void
   setMirrored: (mirrored: boolean) => void
   setShowLandmarks: (showLandmarks: boolean) => void
   setShowFps: (showFps: boolean) => void
@@ -95,6 +100,8 @@ export const useSettingsStore = create<SettingsState>()(
 
       setTheme: (theme) => set({ theme }),
 
+      setLocale: (locale) => set({ locale }),
+
       setMirrored: (mirrored) => set({ mirrored }),
 
       setShowLandmarks: (showLandmarks) => set({ showLandmarks }),
@@ -111,6 +118,7 @@ export const useSettingsStore = create<SettingsState>()(
         thickness: state.thickness,
         color: state.color,
         theme: state.theme,
+        locale: state.locale,
         mirrored: state.mirrored,
         showLandmarks: state.showLandmarks,
         showFps: state.showFps,

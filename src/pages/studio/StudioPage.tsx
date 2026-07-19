@@ -10,6 +10,7 @@ import {
 import { HandSkeletonOverlay } from '@/canvas'
 import { Badge, Button, Modal, Panel, Tooltip } from '@/components'
 import { formatCameraResolution, HAND_LANDMARK_COUNT } from '@/domain'
+import { useTranslation } from '@/i18n'
 import { useSessionStore, useSettingsStore } from '@/store'
 
 import { useStudioAirCanvas } from './useStudioAirCanvas'
@@ -19,6 +20,8 @@ import { useStudioGestureRecognition } from './useStudioGestureRecognition'
 import { useStudioHandVision } from './useStudioHandVision'
 
 export function StudioPage() {
+  const { t, actionName, actionDescription, gestureName, gestureDescription } =
+    useTranslation()
   const sessionStatus = useSessionStore((state) => state.status)
   const mirrored = useSettingsStore((s) => s.mirrored)
   const showLandmarks = useSettingsStore((s) => s.showLandmarks)
@@ -128,37 +131,41 @@ export function StudioPage() {
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="font-display text-2xl font-semibold tracking-tight">
-              Studio
+              {t('studio.title')}
             </h2>
-            <Badge variant="neutral">session: {sessionStatus}</Badge>
+            <Badge variant="neutral">
+              {t('studio.session')}: {t(`sessionStatus.${sessionStatus}`)}
+            </Badge>
             <Badge variant={isOpen ? 'success' : 'outline'}>
-              camera: {status}
+              {t('studio.camera')}: {t(`cameraStatus.${status}`)}
             </Badge>
             <Badge variant={visionRunning ? 'accent' : 'outline'}>
-              vision: {visionRunning ? 'running' : 'idle'}
+              {t('studio.vision')}:{' '}
+              {visionRunning
+                ? t('studio.visionRunning')
+                : t('studio.visionIdle')}
             </Badge>
             <Badge
               variant={interactionState === 'Lost' ? 'outline' : 'success'}
             >
-              state: {interactionState}
+              {t('studio.state')}: {t(`interactionState.${interactionState}`)}
             </Badge>
           </div>
           <p className="text-ink-muted max-w-xl text-sm">
-            Camera + Hand Landmarker are isolated modules. UI only consumes
-            results — AI never imports React.
+            {t('studio.subtitle')}
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={() => setHelpOpen(true)}>
-            Help
+            {t('studio.help')}
           </Button>
         </div>
       </div>
 
       <Panel
-        title="Camera"
-        description="Open a webcam, switch devices, and inspect stream metrics."
+        title={t('studio.cameraTitle')}
+        description={t('studio.cameraDesc')}
         action={
           <div className="flex flex-wrap gap-2">
             {!isOpen ? (
@@ -170,7 +177,7 @@ export function StudioPage() {
                   void handleOpen()
                 }}
               >
-                Open camera
+                {t('studio.openCamera')}
               </Button>
             ) : (
               <Button
@@ -181,7 +188,7 @@ export function StudioPage() {
                   void close()
                 }}
               >
-                Close camera
+                {t('studio.closeCamera')}
               </Button>
             )}
             <Button
@@ -192,7 +199,7 @@ export function StudioPage() {
                 void refreshDevices()
               }}
             >
-              Refresh devices
+              {t('studio.refreshDevices')}
             </Button>
           </div>
         }
@@ -228,8 +235,8 @@ export function StudioPage() {
             ) : (
               <div className="text-ink-subtle flex aspect-video items-center justify-center text-sm">
                 {isSupported
-                  ? 'Camera preview will appear here'
-                  : 'Camera is not supported in this environment'}
+                  ? t('studio.previewPlaceholder')
+                  : t('studio.cameraUnsupported')}
               </div>
             )}
           </div>
@@ -237,7 +244,7 @@ export function StudioPage() {
           <div className="space-y-4">
             <label className="block space-y-1.5">
               <span className="text-ink-secondary text-xs font-medium tracking-wide uppercase">
-                Device
+                {t('studio.device')}
               </span>
               <select
                 className="border-border bg-surface text-ink focus:shadow-focus w-full rounded-md border px-3 py-2 text-sm outline-none"
@@ -250,7 +257,7 @@ export function StudioPage() {
                 }}
               >
                 {devices.length === 0 ? (
-                  <option value="">No devices</option>
+                  <option value="">{t('studio.noDevices')}</option>
                 ) : (
                   devices.map((device) => (
                     <option key={device.deviceId} value={device.deviceId}>
@@ -263,25 +270,33 @@ export function StudioPage() {
 
             <dl className="grid grid-cols-2 gap-3 text-sm">
               <div className="border-border bg-surface-muted rounded-md border px-3 py-2">
-                <dt className="text-ink-muted text-xs">Permission</dt>
-                <dd className="text-ink mt-1 font-medium capitalize">
-                  {permission}
+                <dt className="text-ink-muted text-xs">
+                  {t('studio.permission')}
+                </dt>
+                <dd className="text-ink mt-1 font-medium">
+                  {t(`cameraPermission.${permission}`)}
                 </dd>
               </div>
               <div className="border-border bg-surface-muted rounded-md border px-3 py-2">
-                <dt className="text-ink-muted text-xs">Resolution</dt>
+                <dt className="text-ink-muted text-xs">
+                  {t('studio.resolution')}
+                </dt>
                 <dd className="text-ink mt-1 font-medium">
                   {formatCameraResolution(resolution)}
                 </dd>
               </div>
               <div className="border-border bg-surface-muted rounded-md border px-3 py-2">
-                <dt className="text-ink-muted text-xs">Reported FPS</dt>
+                <dt className="text-ink-muted text-xs">
+                  {t('studio.reportedFps')}
+                </dt>
                 <dd className="text-ink mt-1 font-medium">
                   {reportedFps ?? '—'}
                 </dd>
               </div>
               <div className="border-border bg-surface-muted rounded-md border px-3 py-2">
-                <dt className="text-ink-muted text-xs">Actual FPS</dt>
+                <dt className="text-ink-muted text-xs">
+                  {t('studio.actualFps')}
+                </dt>
                 <dd className="text-ink mt-1 font-medium">
                   {actualFps ?? '—'}
                 </dd>
@@ -295,7 +310,7 @@ export function StudioPage() {
             ) : null}
 
             {permission === 'prompt' ? (
-              <Tooltip content="Asks the browser for webcam access">
+              <Tooltip content={t('studio.requestPermissionTip')}>
                 <Button
                   variant="secondary"
                   size="sm"
@@ -304,7 +319,7 @@ export function StudioPage() {
                     void request()
                   }}
                 >
-                  Request permission
+                  {t('studio.requestPermission')}
                 </Button>
               </Tooltip>
             ) : null}
@@ -313,24 +328,28 @@ export function StudioPage() {
       </Panel>
 
       <Panel
-        title="Gesture Engine"
-        description="Landmarks → interaction states (not high-level gestures)."
+        title={t('studio.gestureEngineTitle')}
+        description={t('studio.gestureEngineDesc')}
       >
         <dl className="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
           <div className="border-border bg-surface-muted rounded-md border px-3 py-2">
-            <dt className="text-ink-muted text-xs">State</dt>
-            <dd className="text-ink mt-1 font-medium">{interactionState}</dd>
-          </div>
-          <div className="border-border bg-surface-muted rounded-md border px-3 py-2">
-            <dt className="text-ink-muted text-xs">Pinch</dt>
+            <dt className="text-ink-muted text-xs">{t('studio.labelState')}</dt>
             <dd className="text-ink mt-1 font-medium">
-              {interactionFeatures?.pinch.active
-                ? `yes · ${(interactionFeatures.pinch.strength * 100).toFixed(0)}%`
-                : 'no'}
+              {t(`interactionState.${interactionState}`)}
             </dd>
           </div>
           <div className="border-border bg-surface-muted rounded-md border px-3 py-2">
-            <dt className="text-ink-muted text-xs">Pointer</dt>
+            <dt className="text-ink-muted text-xs">{t('studio.labelPinch')}</dt>
+            <dd className="text-ink mt-1 font-medium">
+              {interactionFeatures?.pinch.active
+                ? `${t('studio.yes')} · ${(interactionFeatures.pinch.strength * 100).toFixed(0)}%`
+                : t('studio.no')}
+            </dd>
+          </div>
+          <div className="border-border bg-surface-muted rounded-md border px-3 py-2">
+            <dt className="text-ink-muted text-xs">
+              {t('studio.labelPointer')}
+            </dt>
             <dd className="text-ink mt-1 font-mono text-xs font-medium">
               {interactionFeatures?.pointer
                 ? `${interactionFeatures.pointer.x.toFixed(2)}, ${interactionFeatures.pointer.y.toFixed(2)}`
@@ -338,13 +357,15 @@ export function StudioPage() {
             </dd>
           </div>
           <div className="border-border bg-surface-muted rounded-md border px-3 py-2">
-            <dt className="text-ink-muted text-xs">Track</dt>
+            <dt className="text-ink-muted text-xs">{t('studio.labelTrack')}</dt>
             <dd className="text-ink mt-1 font-medium">
               {primaryHand?.trackId ?? '—'}
             </dd>
           </div>
           <div className="border-border bg-surface-muted rounded-md border px-3 py-2">
-            <dt className="text-ink-muted text-xs">Cursor</dt>
+            <dt className="text-ink-muted text-xs">
+              {t('studio.labelCursor')}
+            </dt>
             <dd className="text-ink mt-1 font-mono text-xs font-medium">
               {cursorPosition
                 ? `${cursorPosition.x.toFixed(2)}, ${cursorPosition.y.toFixed(2)}`
@@ -355,8 +376,8 @@ export function StudioPage() {
       </Panel>
 
       <Panel
-        title="Action Engine"
-        description="Command Pattern actions — canvas now; Spotify, PowerPoint, VS Code, OS later."
+        title={t('studio.actionEngineTitle')}
+        description={t('studio.actionEngineDesc')}
       >
         <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {actionCatalog.map((action) => (
@@ -366,13 +387,15 @@ export function StudioPage() {
             >
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-ink text-sm font-medium">{action.name}</p>
+                  <p className="text-ink text-sm font-medium">
+                    {actionName(action.id)}
+                  </p>
                   <Badge variant={action.enabled ? 'accent' : 'outline'}>
-                    {action.domain}
+                    {t(`domain.${action.domain}`)}
                   </Badge>
                 </div>
                 <p className="text-ink-muted mt-1 text-xs">
-                  {action.description}
+                  {actionDescription(action.id)}
                 </p>
                 <p className="text-ink-subtle mt-1 font-mono text-[11px]">
                   {action.id}
@@ -386,7 +409,7 @@ export function StudioPage() {
                     void dispatchAction(action.id)
                   }}
                 >
-                  Run
+                  {t('studio.run')}
                 </Button>
               ) : null}
             </li>
@@ -395,19 +418,19 @@ export function StudioPage() {
       </Panel>
 
       <Panel
-        title="Gesture Recognition"
-        description="Named gestures with confidence + Action Engine commands."
+        title={t('studio.gestureRecognitionTitle')}
+        description={t('studio.gestureRecognitionDesc')}
       >
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(14rem,0.7fr)]">
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-ink-muted text-xs font-medium tracking-wide uppercase">
-                Last match
+                {t('studio.lastMatch')}
               </span>
               {recognizedGesture ? (
                 <>
                   <Badge variant="accent">
-                    {recognizedGesture.definition.name}
+                    {gestureName(recognizedGesture.definition.id)}
                   </Badge>
                   <span className="text-ink-secondary text-sm">
                     {(recognizedGesture.confidence * 100).toFixed(0)}% ·{' '}
@@ -415,7 +438,9 @@ export function StudioPage() {
                   </span>
                 </>
               ) : (
-                <span className="text-ink-muted text-sm">None yet</span>
+                <span className="text-ink-muted text-sm">
+                  {t('studio.noneYet')}
+                </span>
               )}
             </div>
 
@@ -427,7 +452,7 @@ export function StudioPage() {
                 >
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="text-ink text-sm font-medium">
-                      {definition.name}
+                      {gestureName(definition.id)}
                     </p>
                     <Badge variant="outline">{definition.action}</Badge>
                     <span className="text-ink-muted text-xs">
@@ -435,7 +460,7 @@ export function StudioPage() {
                     </span>
                   </div>
                   <p className="text-ink-muted mt-1 text-xs">
-                    {definition.description}
+                    {gestureDescription(definition.id)}
                   </p>
                 </li>
               ))}
@@ -444,20 +469,28 @@ export function StudioPage() {
 
           <div className="border-border bg-surface rounded-md border px-3 py-2">
             <p className="text-ink-muted mb-2 text-xs font-medium tracking-wide uppercase">
-              Action log
+              {t('studio.actionLog')}
             </p>
             {gestureLog.length === 0 ? (
               <p className="text-ink-subtle text-sm">
-                Try open palm, fist, victory, or a quick pinch tap.
+                {t('studio.actionLogEmpty')}
               </p>
             ) : (
               <ul className="space-y-1">
-                {gestureLog.map((line, index) => (
+                {gestureLog.map((entry, index) => (
                   <li
-                    key={`${line}-${index}`}
+                    key={`${entry.kind}-${entry.gestureId}-${index}`}
                     className="text-ink-secondary font-mono text-xs"
                   >
-                    {line}
+                    {entry.kind === 'recognized'
+                      ? t('studio.logRecognized', {
+                          gesture: gestureName(entry.gestureId),
+                          action: entry.action,
+                        })
+                      : t('studio.logConfidence', {
+                          gesture: gestureName(entry.gestureId),
+                          confidence: (entry.confidence * 100).toFixed(0),
+                        })}
                   </li>
                 ))}
               </ul>
@@ -467,8 +500,8 @@ export function StudioPage() {
       </Panel>
 
       <Panel
-        title="AirCanvas"
-        description="Drawing starts on Gesture state Drawing and stops on Hover. Pinch + move to ink."
+        title={t('studio.airCanvasTitle')}
+        description={t('studio.airCanvasDesc')}
         action={
           <div className="flex flex-wrap gap-2">
             <Button
@@ -476,20 +509,20 @@ export function StudioPage() {
               size="sm"
               onClick={() => setTool('brush')}
             >
-              Brush
+              {t('studio.brush')}
             </Button>
             <Button
               variant={tool === 'eraser' ? 'secondary' : 'outline'}
               size="sm"
               onClick={() => setTool('eraser')}
             >
-              Eraser
+              {t('studio.eraser')}
             </Button>
             <Button variant="ghost" size="sm" onClick={clearCanvas}>
-              Clear
+              {t('studio.clear')}
             </Button>
             <Button variant="primary" size="sm" onClick={savePng}>
-              Save PNG
+              {t('studio.savePng')}
             </Button>
           </div>
         }
@@ -498,7 +531,7 @@ export function StudioPage() {
           <div className="flex flex-wrap items-center gap-4">
             <label className="flex items-center gap-2 text-sm">
               <span className="text-ink-muted text-xs font-medium tracking-wide uppercase">
-                Thickness
+                {t('studio.thickness')}
               </span>
               <input
                 type="range"
@@ -515,14 +548,14 @@ export function StudioPage() {
 
             <div className="flex items-center gap-2">
               <span className="text-ink-muted text-xs font-medium tracking-wide uppercase">
-                Color
+                {t('studio.color')}
               </span>
               <div className="flex gap-1.5">
                 {AIR_CANVAS_COLOR_PRESETS.map((preset) => (
                   <button
                     key={preset}
                     type="button"
-                    aria-label={`Color ${preset}`}
+                    aria-label={t('studio.colorAria', { color: preset })}
                     onClick={() => setColor(preset)}
                     className={[
                       'size-7 rounded-md border transition-transform',
@@ -539,12 +572,12 @@ export function StudioPage() {
                 value={color === '#ffffff' ? '#ffffff' : color}
                 onChange={(event) => setColor(event.target.value)}
                 className="border-border h-7 w-9 cursor-pointer rounded-md border bg-transparent"
-                aria-label="Custom color"
+                aria-label={t('studio.customColorAria')}
               />
             </div>
 
             <Badge variant={strokeActive ? 'accent' : 'outline'}>
-              {strokeActive ? 'inking' : 'idle'}
+              {strokeActive ? t('studio.inking') : t('studio.idle')}
             </Badge>
           </div>
 
@@ -565,14 +598,12 @@ export function StudioPage() {
       </Panel>
 
       <Panel
-        title="Hand Landmarker"
-        description="MediaPipe Tasks Vision — up to 2 hands, 21 landmarks, handedness, confidence."
+        title={t('studio.handLandmarkerTitle')}
+        description={t('studio.handLandmarkerDesc')}
       >
         {hands.length === 0 ? (
           <p className="text-ink-muted text-sm">
-            {isOpen
-              ? 'No hands detected yet. Show one or two hands to the camera.'
-              : 'Open the camera to start vision.'}
+            {isOpen ? t('studio.noHands') : t('studio.openCameraForVision')}
           </p>
         ) : (
           <ul className="space-y-3">
@@ -582,12 +613,19 @@ export function StudioPage() {
                 className="border-border bg-surface-muted rounded-md border px-4 py-3"
               >
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="accent">{hand.handedness}</Badge>
+                  <Badge variant="accent">
+                    {t(`handedness.${hand.handedness}`)}
+                  </Badge>
                   <span className="text-ink-secondary text-sm">
-                    confidence {(hand.confidence * 100).toFixed(1)}%
+                    {t('studio.confidence', {
+                      value: (hand.confidence * 100).toFixed(1),
+                    })}
                   </span>
                   <span className="text-ink-muted text-sm">
-                    {hand.landmarks.length}/{HAND_LANDMARK_COUNT} landmarks
+                    {t('studio.landmarksCount', {
+                      count: hand.landmarks.length,
+                      total: HAND_LANDMARK_COUNT,
+                    })}
                   </span>
                 </div>
               </li>
@@ -603,32 +641,25 @@ export function StudioPage() {
       </Panel>
 
       <Panel
-        title="Camera reference"
-        description="Skeleton overlay on the live camera feed."
+        title={t('studio.cameraRefTitle')}
+        description={t('studio.cameraRefDesc')}
         tone="muted"
       >
-        <p className="text-ink-muted text-sm">
-          Use the camera preview above for tracking feedback. Ink is painted on
-          the AirCanvas surface — pinch and move to enter Drawing.
-        </p>
+        <p className="text-ink-muted text-sm">{t('studio.cameraRefBody')}</p>
       </Panel>
 
       <Modal
         open={helpOpen}
         onClose={() => setHelpOpen(false)}
-        title="Studio help"
-        description="Camera → Vision → Gesture → Cursor → AirCanvas."
+        title={t('studio.helpTitle')}
+        description={t('studio.helpDesc')}
         footer={
           <Button variant="primary" onClick={() => setHelpOpen(false)}>
-            Got it
+            {t('studio.gotIt')}
           </Button>
         }
       >
-        <p>
-          Pinch and drag to reach the Drawing state. AirCanvas starts inking at
-          the cursor and stops when you return to Hover. Use eraser, thickness,
-          color, clear, and Save PNG from the toolbar.
-        </p>
+        <p>{t('studio.helpBody')}</p>
       </Modal>
     </section>
   )

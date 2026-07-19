@@ -23,6 +23,18 @@ import {
   type GestureRecognizer,
 } from '@/gesture'
 
+export type GestureLogEntry =
+  | {
+      readonly kind: 'recognized'
+      readonly gestureId: string
+      readonly action: string
+    }
+  | {
+      readonly kind: 'logged'
+      readonly gestureId: string
+      readonly confidence: number
+    }
+
 /**
  * Presentation bridge: Action Engine + Gesture Recognizer wired together.
  */
@@ -34,7 +46,7 @@ export function useStudioGestureRecognition(
 ) {
   const recognizerRef = useRef<GestureRecognizer | null>(null)
   const [lastMatch, setLastMatch] = useState<GestureMatch | null>(null)
-  const [log, setLog] = useState<string[]>([])
+  const [log, setLog] = useState<GestureLogEntry[]>([])
   const [definitions] = useState(() => createBuiltinGestureDefinitions())
 
   const { actionEngine, actionCatalog, canvasCommands } = useMemo(() => {
@@ -58,8 +70,16 @@ export function useStudioGestureRecognition(
       definitions,
       commandFactories: [
         createCallbackCommandFactory('log', (ctx) => {
-          const line = `${ctx.match.definition.name} · ${(ctx.match.confidence * 100).toFixed(0)}%`
-          setLog((prev) => [line, ...prev].slice(0, 8))
+          setLog((prev) =>
+            [
+              {
+                kind: 'logged' as const,
+                gestureId: ctx.match.definition.id,
+                confidence: ctx.match.confidence,
+              },
+              ...prev,
+            ].slice(0, 8),
+          )
         }),
         ...createGestureCommandFactoriesFromActions(
           actionEngine,
@@ -70,8 +90,16 @@ export function useStudioGestureRecognition(
 
     const unsubscribe = recognizer.onRecognized((match) => {
       setLastMatch(match)
-      const line = `${match.definition.name} → ${match.definition.action}`
-      setLog((prev) => [line, ...prev].slice(0, 8))
+      setLog((prev) =>
+        [
+          {
+            kind: 'recognized' as const,
+            gestureId: match.definition.id,
+            action: match.definition.action,
+          },
+          ...prev,
+        ].slice(0, 8),
+      )
     })
 
     recognizerRef.current = recognizer

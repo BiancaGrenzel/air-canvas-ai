@@ -8,3 +8,4 @@ export {
   useSettingsStore,
 } from './settings.store'
 export type { AppSettings, ThemePreference } from './settings.store'
+export type { AppLocale } from '@/i18n/types'

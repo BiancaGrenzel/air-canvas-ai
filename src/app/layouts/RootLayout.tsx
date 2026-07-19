@@ -2,6 +2,7 @@ import { NavLink, Outlet } from 'react-router-dom'
 
 import { ROUTES } from '@/app/router/routes'
 import { Badge, Container } from '@/components'
+import { useTranslation } from '@/i18n'
 import { cn } from '@/shared/lib'
 
 const navLinkClassName = ({ isActive }: { isActive: boolean }) =>
@@ -13,26 +14,28 @@ const navLinkClassName = ({ isActive }: { isActive: boolean }) =>
   )
 
 export function RootLayout() {
+  const { t } = useTranslation()
+
   return (
     <div className="text-ink min-h-screen">
       <header className="border-border bg-surface/80 border-b backdrop-blur-md">
         <Container className="flex items-center justify-between gap-6 py-4">
           <div className="space-y-1">
-            <Badge variant="outline">Open Source</Badge>
+            <Badge variant="outline">{t('app.openSource')}</Badge>
             <h1 className="font-display text-lg font-semibold tracking-tight">
-              AirCanvas AI
+              {t('app.name')}
             </h1>
           </div>
 
           <nav className="flex items-center gap-1">
             <NavLink to={ROUTES.home} className={navLinkClassName} end>
-              Home
+              {t('nav.home')}
             </NavLink>
             <NavLink to={ROUTES.studio} className={navLinkClassName}>
-              Studio
+              {t('nav.studio')}
             </NavLink>
             <NavLink to={ROUTES.settings} className={navLinkClassName}>
-              Settings
+              {t('nav.settings')}
             </NavLink>
           </nav>
         </Container>

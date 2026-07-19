@@ -9,19 +9,21 @@ import {
   CardHeader,
   buttonVariants,
 } from '@/components'
-import { APP_DESCRIPTION, APP_NAME } from '@/shared/config'
+import { useTranslation } from '@/i18n'
 import { cn } from '@/shared/lib'
 
 export function HomePage() {
+  const { t } = useTranslation()
+
   return (
     <section className="space-y-8">
       <div className="space-y-4">
-        <Badge variant="accent">Computer Vision Input</Badge>
+        <Badge variant="accent">{t('app.badgeVision')}</Badge>
         <h2 className="font-display text-ink max-w-2xl text-4xl font-semibold tracking-tight">
-          {APP_NAME}
+          {t('app.name')}
         </h2>
         <p className="text-ink-muted max-w-2xl text-base leading-relaxed">
-          {APP_DESCRIPTION}
+          {t('app.description')}
         </p>
       </div>
 
@@ -30,55 +32,46 @@ export function HomePage() {
           to={ROUTES.studio}
           className={cn(buttonVariants({ variant: 'primary', size: 'lg' }))}
         >
-          Open Studio
+          {t('home.openStudio')}
         </Link>
         <Link
           to={ROUTES.settings}
           className={cn(buttonVariants({ variant: 'outline', size: 'lg' }))}
         >
-          Settings
+          {t('home.settings')}
         </Link>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader
-            title="Hand tracking"
-            description="MediaPipe Hand Landmarker ready for adapters."
+            title={t('home.cardTrackingTitle')}
+            description={t('home.cardTrackingDesc')}
           />
-          <CardBody>
-            Capture landmarks from any webcam without coupling UI to the browser
-            APIs.
-          </CardBody>
+          <CardBody>{t('home.cardTrackingBody')}</CardBody>
         </Card>
         <Card>
           <CardHeader
-            title="Virtual cursor"
-            description="Pointer control abstracted behind ports."
+            title={t('home.cardCursorTitle')}
+            description={t('home.cardCursorDesc')}
           />
-          <CardBody>
-            Move a cursor with your hands today — map to OS input when Tauri
-            arrives.
-          </CardBody>
+          <CardBody>{t('home.cardCursorBody')}</CardBody>
         </Card>
         <Card>
           <CardHeader
-            title="Gesture actions"
-            description="Custom gestures for apps, media, and more."
+            title={t('home.cardGesturesTitle')}
+            description={t('home.cardGesturesDesc')}
           />
-          <CardBody>
-            Domain models and use cases stay host-agnostic for desktop
-            migration.
-          </CardBody>
+          <CardBody>{t('home.cardGesturesBody')}</CardBody>
         </Card>
       </div>
 
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="sm" disabled>
-          Coming soon
+          {t('home.comingSoon')}
         </Button>
         <span className="text-ink-subtle text-xs">
-          Tracking pipeline not wired yet
+          {t('home.pipelineHint')}
         </span>
       </div>
     </section>

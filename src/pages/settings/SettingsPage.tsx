@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 
 import { AIR_CANVAS_COLOR_PRESETS } from '@/air-canvas'
 import { Button, Panel } from '@/components'
+import { APP_LOCALES, useTranslation, type AppLocale } from '@/i18n'
 import { cn } from '@/shared/lib'
 import {
   SETTINGS_LIMITS,
@@ -66,11 +67,13 @@ function Toggle({
 }
 
 export function SettingsPage() {
+  const { t } = useTranslation()
   const sensitivity = useSettingsStore((s) => s.sensitivity)
   const targetFps = useSettingsStore((s) => s.targetFps)
   const thickness = useSettingsStore((s) => s.thickness)
   const color = useSettingsStore((s) => s.color)
   const theme = useSettingsStore((s) => s.theme)
+  const locale = useSettingsStore((s) => s.locale)
   const mirrored = useSettingsStore((s) => s.mirrored)
   const showLandmarks = useSettingsStore((s) => s.showLandmarks)
   const showFps = useSettingsStore((s) => s.showFps)
@@ -80,6 +83,7 @@ export function SettingsPage() {
   const setThickness = useSettingsStore((s) => s.setThickness)
   const setColor = useSettingsStore((s) => s.setColor)
   const setTheme = useSettingsStore((s) => s.setTheme)
+  const setLocale = useSettingsStore((s) => s.setLocale)
   const setMirrored = useSettingsStore((s) => s.setMirrored)
   const setShowLandmarks = useSettingsStore((s) => s.setShowLandmarks)
   const setShowFps = useSettingsStore((s) => s.setShowFps)
@@ -90,26 +94,24 @@ export function SettingsPage() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-2">
           <h2 className="font-display text-2xl font-semibold tracking-tight">
-            Settings
+            {t('settings.title')}
           </h2>
           <p className="text-ink-muted max-w-xl text-sm">
-            Preferences persist in the browser via Zustand. Changes apply to
-            Studio immediately where possible; camera FPS applies on the next
-            open.
+            {t('settings.subtitle')}
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={resetSettings}>
-          Reset defaults
+          {t('settings.reset')}
         </Button>
       </div>
 
       <Panel
-        title="Cursor"
-        description="How the virtual pointer responds to hand motion."
+        title={t('settings.cursorTitle')}
+        description={t('settings.cursorDesc')}
       >
         <div className="space-y-5">
           <SettingRow
-            label="Sensitivity"
+            label={t('settings.sensitivity')}
             description={`${SETTINGS_LIMITS.sensitivity.min}–${SETTINGS_LIMITS.sensitivity.max}`}
           >
             <label className="flex items-center gap-3">
@@ -129,11 +131,11 @@ export function SettingsPage() {
           </SettingRow>
 
           <SettingRow
-            label="Mirroring"
-            description="Flip X to match a mirrored webcam preview."
+            label={t('settings.mirroring')}
+            description={t('settings.mirroringDesc')}
           >
             <Toggle
-              label="Mirroring"
+              label={t('settings.mirroring')}
               checked={mirrored}
               onChange={setMirrored}
             />
@@ -142,13 +144,13 @@ export function SettingsPage() {
       </Panel>
 
       <Panel
-        title="Camera & vision"
-        description="Capture rate and on-preview overlays."
+        title={t('settings.cameraTitle')}
+        description={t('settings.cameraDesc')}
       >
         <div className="space-y-5">
           <SettingRow
-            label="Target FPS"
-            description="Requested camera frame rate (device may clamp)."
+            label={t('settings.targetFps')}
+            description={t('settings.targetFpsDesc')}
           >
             <div className="flex flex-wrap items-center gap-2">
               {TARGET_FPS_PRESETS.map((preset) => (
@@ -178,31 +180,38 @@ export function SettingsPage() {
           </SettingRow>
 
           <SettingRow
-            label="Show landmarks"
-            description="Skeleton overlay on the camera preview."
+            label={t('settings.showLandmarks')}
+            description={t('settings.showLandmarksDesc')}
           >
             <Toggle
-              label="Show landmarks"
+              label={t('settings.showLandmarks')}
               checked={showLandmarks}
               onChange={setShowLandmarks}
             />
           </SettingRow>
 
           <SettingRow
-            label="Show FPS"
-            description="Display reported and actual FPS on the preview."
+            label={t('settings.showFps')}
+            description={t('settings.showFpsDesc')}
           >
-            <Toggle label="Show FPS" checked={showFps} onChange={setShowFps} />
+            <Toggle
+              label={t('settings.showFps')}
+              checked={showFps}
+              onChange={setShowFps}
+            />
           </SettingRow>
         </div>
       </Panel>
 
       <Panel
-        title="Drawing"
-        description="Default brush used by AirCanvas and canvas actions."
+        title={t('settings.drawingTitle')}
+        description={t('settings.drawingDesc')}
       >
         <div className="space-y-5">
-          <SettingRow label="Thickness" description="Brush width in pixels.">
+          <SettingRow
+            label={t('settings.thickness')}
+            description={t('settings.thicknessDesc')}
+          >
             <label className="flex items-center gap-3">
               <input
                 type="range"
@@ -219,13 +228,16 @@ export function SettingsPage() {
             </label>
           </SettingRow>
 
-          <SettingRow label="Color" description="Default brush color.">
+          <SettingRow
+            label={t('settings.color')}
+            description={t('settings.colorDesc')}
+          >
             <div className="flex flex-wrap items-center gap-2">
               {AIR_CANVAS_COLOR_PRESETS.map((preset) => (
                 <button
                   key={preset}
                   type="button"
-                  aria-label={`Color ${preset}`}
+                  aria-label={t('settings.colorAria', { color: preset })}
                   onClick={() => setColor(preset)}
                   className={cn(
                     'size-7 rounded-md border transition-transform',
@@ -241,30 +253,56 @@ export function SettingsPage() {
                 value={/^#[0-9a-fA-F]{6}$/.test(color) ? color : '#09090b'}
                 onChange={(event) => setColor(event.target.value)}
                 className="border-border h-7 w-9 cursor-pointer rounded-md border bg-transparent"
-                aria-label="Custom color"
+                aria-label={t('settings.customColorAria')}
               />
             </div>
           </SettingRow>
         </div>
       </Panel>
 
-      <Panel title="Appearance" description="UI theme preference.">
-        <SettingRow label="Theme" description="Stored locally with the rest.">
-          <div className="flex flex-wrap gap-2">
-            {themes.map((value) => (
-              <Button
-                key={value}
-                type="button"
-                variant={theme === value ? 'secondary' : 'outline'}
-                size="sm"
-                onClick={() => setTheme(value)}
-                className="capitalize"
-              >
-                {value}
-              </Button>
-            ))}
-          </div>
-        </SettingRow>
+      <Panel
+        title={t('settings.appearanceTitle')}
+        description={t('settings.appearanceDesc')}
+      >
+        <div className="space-y-5">
+          <SettingRow
+            label={t('settings.theme')}
+            description={t('settings.themeDesc')}
+          >
+            <div className="flex flex-wrap gap-2">
+              {themes.map((value) => (
+                <Button
+                  key={value}
+                  type="button"
+                  variant={theme === value ? 'secondary' : 'outline'}
+                  size="sm"
+                  onClick={() => setTheme(value)}
+                >
+                  {t(`theme.${value}`)}
+                </Button>
+              ))}
+            </div>
+          </SettingRow>
+
+          <SettingRow
+            label={t('settings.language')}
+            description={t('settings.languageDesc')}
+          >
+            <div className="flex flex-wrap gap-2">
+              {APP_LOCALES.map((value: AppLocale) => (
+                <Button
+                  key={value}
+                  type="button"
+                  variant={locale === value ? 'secondary' : 'outline'}
+                  size="sm"
+                  onClick={() => setLocale(value)}
+                >
+                  {t(`locale.${value}`)}
+                </Button>
+              ))}
+            </div>
+          </SettingRow>
+        </div>
       </Panel>
     </section>
   )
