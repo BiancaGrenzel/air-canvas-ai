@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
 
 import { ROUTES } from '@/app/router/routes'
 import { Badge, Container } from '@/components'
@@ -15,11 +15,16 @@ const navLinkClassName = ({ isActive }: { isActive: boolean }) =>
 
 export function RootLayout() {
   const { t } = useTranslation()
+  const location = useLocation()
+  const isStudio = location.pathname === ROUTES.studio
 
   return (
     <div className="text-ink min-h-screen">
       <header className="border-border bg-surface/80 border-b backdrop-blur-md">
-        <Container className="flex items-center justify-between gap-6 py-4">
+        <Container
+          size={isStudio ? 'full' : 'lg'}
+          className="flex items-center justify-between gap-6 py-3"
+        >
           <div className="space-y-1">
             <Badge variant="outline">{t('app.openSource')}</Badge>
             <h1 className="font-display text-lg font-semibold tracking-tight">
@@ -41,8 +46,11 @@ export function RootLayout() {
         </Container>
       </header>
 
-      <main className="py-10">
-        <Container>
+      <main className={cn(isStudio ? 'py-0' : 'py-10')}>
+        <Container
+          size={isStudio ? 'full' : 'lg'}
+          className={isStudio ? 'px-0' : undefined}
+        >
           <Outlet />
         </Container>
       </main>
