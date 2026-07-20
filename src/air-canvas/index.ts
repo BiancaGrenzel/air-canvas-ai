@@ -12,7 +12,12 @@ export {
   DEFAULT_AIR_CANVAS_SETTINGS,
 } from './defaults'
 
-export { appendStrokePoint, createStroke, toCanvasPoint } from './stroke'
+export {
+  appendStrokePoint,
+  createStroke,
+  toCanvasPoint,
+  trimReleaseFlick,
+} from './stroke'
 
 export { AirCanvasSurface } from './components'
 export type { AirCanvasSurfaceProps } from './components'

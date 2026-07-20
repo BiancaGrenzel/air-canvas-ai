@@ -23,11 +23,14 @@ export function useStudioGestureEngine(
   useEffect(() => {
     const engine = createGestureEngine({
       motion: { preferDrawing: true, travelThreshold: 0 },
-      drawing: { releaseGraceFrames: 18, presenceGraceFrames: 8 },
+      drawing: {
+        releaseGraceFrames: 3,
+        presenceGraceFrames: 6,
+        openingFrames: 2,
+      },
       pinch: {
-        activateBelow: 0.13,
-        releaseAbove: 0.26,
-        releaseSmoothAlpha: 0.45,
+        activateBelow: 0.12,
+        releaseAbove: 0.18,
       },
     })
     engineRef.current = engine

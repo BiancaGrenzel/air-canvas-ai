@@ -1,6 +1,6 @@
 import { DEFAULT_AIR_CANVAS_SETTINGS } from './defaults'
 import { fillBackground, paintStroke } from './paint'
-import { appendStrokePoint, createStroke } from './stroke'
+import { appendStrokePoint, createStroke, trimReleaseFlick } from './stroke'
 import type {
   AirCanvasEngine,
   AirCanvasPoint,
@@ -10,10 +10,10 @@ import type {
 } from './types'
 
 /** Rejoin stroke fragments when pinch tracking drops mid-line. */
-const STROKE_RESUME_MS = 700
-const STROKE_RESUME_DISTANCE = 0.35
-/** Keep ink alive after leaving Drawing (frames ≈ vision updates). */
-const INK_RELEASE_GRACE_FRAMES = 12
+const STROKE_RESUME_MS = 450
+const STROKE_RESUME_DISTANCE = 0.22
+/** Hold stroke open briefly without painting — avoids release trails. */
+const INK_RELEASE_GRACE_FRAMES = 3
 
 function pointDistance(a: AirCanvasPoint, b: AirCanvasPoint): number {
   const dx = a.x - b.x
@@ -183,10 +183,11 @@ export function createAirCanvas(
 
     endStroke() {
       if (!activeStroke) return
-      const last = activeStroke.points[activeStroke.points.length - 1]
+      const trimmed = trimReleaseFlick(activeStroke)
+      const last = trimmed.points[trimmed.points.length - 1]
       lastStrokeEndPoint = last ? { ...last } : null
       lastStrokeEndedAt = Date.now()
-      strokes.push(activeStroke)
+      strokes.push(trimmed)
       activeStroke = null
       framesWithoutInk = 0
       redraw()
@@ -206,15 +207,12 @@ export function createAirCanvas(
         return
       }
 
-      // Sticky ink through brief Drawing dropouts from pinch noise.
+      // Sticky open stroke through brief flicker, but do not keep painting
+      // after the user opens the pinch (that caused long release trails).
       if (activeStroke) {
         framesWithoutInk += 1
 
         if (framesWithoutInk <= INK_RELEASE_GRACE_FRAMES) {
-          if (point) {
-            activeStroke = appendStrokePoint(activeStroke, point)
-            redraw()
-          }
           return
         }
 

@@ -101,8 +101,11 @@ function rawVictoryScore(hand: HandPose): number {
 
 /**
  * Rock / horns 🤘 — index + pinky up, middle + ring folded.
+ * Rejects pinch-release frames (thumb still near index) which look like a
+ * half-open draw hand after an upward stroke.
  */
 function rawRockScore(hand: HandPose): number {
+  const thumbTip = hand.landmarks[HandLandmarkIndex.THUMB_TIP]
   const indexMcp = hand.landmarks[HandLandmarkIndex.INDEX_FINGER_MCP]
   const indexPip = hand.landmarks[HandLandmarkIndex.INDEX_FINGER_PIP]
   const indexTip = hand.landmarks[HandLandmarkIndex.INDEX_FINGER_TIP]
@@ -115,6 +118,7 @@ function rawRockScore(hand: HandPose): number {
   const pinkyTip = hand.landmarks[HandLandmarkIndex.PINKY_TIP]
 
   if (
+    !thumbTip ||
     !indexMcp ||
     !indexPip ||
     !indexTip ||
@@ -130,11 +134,17 @@ function rawRockScore(hand: HandPose): number {
   }
 
   const scale = handScale(hand)
+
+  // Still parting a pinch — not a deliberate rock pose.
+  if (distance2d(thumbTip, indexTip) < scale * 0.55) {
+    return 0
+  }
+
   const indexUp = fingerExtended(indexMcp, indexPip, indexTip)
   const pinkyUp = fingerExtended(pinkyMcp, pinkyPip, pinkyTip)
   const middleDown = fingerFolded(middleMcp, middleTip, scale)
   const ringDown = fingerFolded(ringMcp, ringTip, scale)
-  const hornSpread = distance2d(indexTip, pinkyTip) > scale * 0.45
+  const hornSpread = distance2d(indexTip, pinkyTip) > scale * 0.5
 
   if (!indexUp || !pinkyUp || !middleDown || !ringDown || !hornSpread) {
     return 0

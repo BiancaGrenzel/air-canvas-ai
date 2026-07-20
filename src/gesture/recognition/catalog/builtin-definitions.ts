@@ -12,14 +12,15 @@ export function createBuiltinGestureDefinitions(): GestureDefinition[] {
       id: 'rock',
       name: 'Rock',
       description: 'Clear the AirCanvas drawing surface.',
-      confidence: 0.85,
+      confidence: 0.88,
       action: 'canvas.clear',
       matcher: {
         type: 'landmark-rock',
-        params: { minScore: 0.85 },
+        params: { minScore: 0.88 },
       },
-      holdMs: 220,
-      cooldownMs: 1400,
+      // Longer hold: pinch-release with index up briefly looks like 🤘.
+      holdMs: 420,
+      cooldownMs: 1600,
       exclusiveGroup: POSE_GROUP,
     }),
     createGestureDefinition({

@@ -74,13 +74,28 @@ export function createGestureRecognizer(
   const holdStartedAt = new Map<string, number>()
   const exclusiveGroupLastFiredAt = new Map<string, number>()
   let lastMatch: GestureMatch | null = null
-  /** Suppress color/clear/save briefly after inking so flicker ≠ commands. */
+  /**
+   * Suppress pose commands after inking so release frames ≠ clear/save/color.
+   * Clear (rock) needs a longer window: opening a pinch after an upward stroke
+   * often looks like 🤘 for a beat.
+   */
   let inkGuardUntilMs = 0
+  let clearGuardUntilMs = 0
 
   const isInkingState = (
     state: string | null | undefined,
   ): state is 'Pinch' | 'Drawing' | 'Dragging' =>
     state === 'Pinch' || state === 'Drawing' || state === 'Dragging'
+
+  const justLeftInk = (
+    state: string | null | undefined,
+    previous: string | null | undefined,
+  ) =>
+    (state === 'Released' || state === 'Hover') &&
+    (previous === 'Drawing' ||
+      previous === 'Pinch' ||
+      previous === 'Dragging' ||
+      previous === 'Released')
 
   const buildContext = (
     snapshot: InteractionSnapshot,
@@ -129,6 +144,7 @@ export function createGestureRecognizer(
       exclusiveGroupLastFiredAt.clear()
       lastMatch = null
       inkGuardUntilMs = 0
+      clearGuardUntilMs = 0
     },
 
     async update(snapshot, hands = []) {
@@ -140,11 +156,21 @@ export function createGestureRecognizer(
         isInkingState(primary?.previousState) ||
         primary?.features.pinch.active
       ) {
-        // ~450ms after leaving draw/pinch before color/clear/save may fire.
+        // ~450ms after leaving draw/pinch before color may fire.
         inkGuardUntilMs = Math.max(inkGuardUntilMs, ctx.timestampMs + 450)
       }
 
+      if (
+        primary?.state === 'Drawing' ||
+        primary?.previousState === 'Drawing' ||
+        justLeftInk(primary?.state, primary?.previousState)
+      ) {
+        // ~1.1s before rock/clear — release-after-upstroke often mimics 🤘.
+        clearGuardUntilMs = Math.max(clearGuardUntilMs, ctx.timestampMs + 1100)
+      }
+
       const inkGuarded = ctx.timestampMs < inkGuardUntilMs
+      const clearGuarded = ctx.timestampMs < clearGuardUntilMs
 
       let best: GestureMatch | null = null
 
@@ -152,12 +178,14 @@ export function createGestureRecognizer(
         if (definition.enabled === false) continue
 
         const isPose = definition.exclusiveGroup === 'hand-pose'
+        const isClear = definition.id === 'rock'
         const isColorTap = definition.id === 'pinch-tap'
         const blocksWhileInking = isPose || isColorTap
 
         if (
           blocksWhileInking &&
           (inkGuarded ||
+            (isClear && clearGuarded) ||
             isInkingState(primary?.state) ||
             primary?.features.pinch.active)
         ) {

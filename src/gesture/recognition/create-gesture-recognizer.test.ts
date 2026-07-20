@@ -294,4 +294,93 @@ describe('createGestureRecognizer', () => {
     // Still blocked by exclusive group cooldown (~900ms+).
     expect(executed).toEqual(['pose-a'])
   })
+
+  it('blocks rock/clear longer after Drawing than other pose commands', async () => {
+    const executed: string[] = []
+
+    const recognizer = createGestureRecognizer({
+      definitions: [
+        createGestureDefinition({
+          id: 'rock',
+          name: 'Rock',
+          description: 'clear',
+          confidence: 0.4,
+          action: 'record',
+          matcher: {
+            type: 'interaction-hold',
+            params: { state: 'Hover' },
+          },
+          holdMs: 0,
+          cooldownMs: 0,
+          exclusiveGroup: 'hand-pose',
+        }),
+        createGestureDefinition({
+          id: 'fist',
+          name: 'Fist',
+          description: 'color',
+          confidence: 0.4,
+          action: 'record',
+          matcher: {
+            type: 'interaction-enter',
+            params: { state: 'Tracking' },
+          },
+          holdMs: 0,
+          cooldownMs: 0,
+          exclusiveGroup: 'hand-pose',
+        }),
+      ],
+      commandFactories: [
+        createCallbackCommandFactory('record', (ctx) => {
+          executed.push(ctx.match.definition.id)
+        }),
+      ],
+    })
+
+    // Leave Drawing — starts clear guard (~1100ms) and ink guard (~450ms).
+    await recognizer.update(
+      snapshotWith({
+        state: 'Released',
+        previousState: 'Drawing',
+        changed: true,
+        features: {
+          ...createIdleGestureFeatures(),
+          present: true,
+          confidence: 0.95,
+        },
+      }),
+    )
+    expect(executed).toEqual([])
+
+    // 600ms later: ink guard expired, but clear guard still blocks rock.
+    await recognizer.update({
+      ...snapshotWith({
+        state: 'Hover',
+        previousState: 'Hover',
+        changed: false,
+        features: {
+          ...createIdleGestureFeatures(),
+          present: true,
+          confidence: 0.95,
+        },
+      }),
+      timestampMs: 1600,
+    })
+    expect(executed).toEqual([])
+
+    // After clear guard (~1100ms from last Drawing-adjacent frame).
+    await recognizer.update({
+      ...snapshotWith({
+        state: 'Hover',
+        previousState: 'Hover',
+        changed: false,
+        features: {
+          ...createIdleGestureFeatures(),
+          present: true,
+          confidence: 0.95,
+        },
+      }),
+      timestampMs: 2200,
+    })
+    expect(executed).toEqual(['rock'])
+  })
 })

@@ -8,15 +8,10 @@ import type {
 } from './feature-detector'
 
 export type PinchDetectorOptions = {
-  /** Normalized distance below which pinch activates (raw, snappy). */
+  /** Normalized distance below which pinch activates. */
   activateBelow?: number
-  /** Hysteresis: release above this (smoothed) distance. */
+  /** Hysteresis: release above this distance (must be > activateBelow). */
   releaseAbove?: number
-  /**
-   * EMA for release only (0–1). Lower = stickier hold while drawing.
-   * Activation always uses raw distance so pinch feels instant.
-   */
-  releaseSmoothAlpha?: number
 }
 
 /**
@@ -49,8 +44,7 @@ export function createPinchDetector(
   options: PinchDetectorOptions = {},
 ): GestureFeatureDetector {
   const activateBelow = options.activateBelow ?? 0.12
-  const releaseAbove = options.releaseAbove ?? 0.24
-  const releaseSmoothAlpha = options.releaseSmoothAlpha ?? 0.4
+  const releaseAbove = options.releaseAbove ?? 0.18
 
   return {
     id: 'pinch',
@@ -60,7 +54,6 @@ export function createPinchDetector(
       const wrist = ctx.hand.landmarks[HandLandmarkIndex.WRIST]
       const middleMcp = ctx.hand.landmarks[HandLandmarkIndex.MIDDLE_FINGER_MCP]
       const wasActive = ctx.previous?.pinch.active ?? false
-      const prevDistance = ctx.previous?.pinch.distance
 
       // Brief landmark drop while pinching — keep previous pinch (no stroke chop).
       if (!thumb || !index || !wrist || !middleMcp) {
@@ -73,24 +66,21 @@ export function createPinchDetector(
       }
 
       const handScale = Math.max(distance2d(wrist, middleMcp), 0.05)
-      const raw = distance2d(thumb, index) / handScale
-
-      // Store smoothed distance for sticky release; activate on raw for snappy start.
-      const distance =
-        wasActive && typeof prevDistance === 'number'
-          ? prevDistance * (1 - releaseSmoothAlpha) + raw * releaseSmoothAlpha
-          : raw
+      const distance = distance2d(thumb, index) / handScale
 
       if (!wasActive && looksLikeClosedFist(ctx.hand.landmarks, handScale)) {
-        draft.pinch = { active: false, distance: raw, strength: 0 }
+        draft.pinch = { active: false, distance, strength: 0 }
         return
       }
 
-      const active = wasActive ? distance <= releaseAbove : raw <= activateBelow
+      // Raw distance for both edges — snappy open/close. Hysteresis only.
+      const active = wasActive
+        ? distance <= releaseAbove
+        : distance <= activateBelow
 
-      const strength = clamp01(1 - (wasActive ? distance : raw) / releaseAbove)
+      const strength = clamp01(1 - distance / releaseAbove)
 
-      draft.pinch = { active, distance: wasActive ? distance : raw, strength }
+      draft.pinch = { active, distance, strength }
     },
   }
 }
