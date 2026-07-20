@@ -71,7 +71,16 @@ export function createGestureRecognizer(
 
   const listeners = new Set<GestureRecognizedListener>()
   const lastFiredAt = new Map<string, number>()
+  const holdStartedAt = new Map<string, number>()
+  const exclusiveGroupLastFiredAt = new Map<string, number>()
   let lastMatch: GestureMatch | null = null
+  /** Suppress color/clear/save briefly after inking so flicker ≠ commands. */
+  let inkGuardUntilMs = 0
+
+  const isInkingState = (
+    state: string | null | undefined,
+  ): state is 'Pinch' | 'Drawing' | 'Dragging' =>
+    state === 'Pinch' || state === 'Drawing' || state === 'Dragging'
 
   const buildContext = (
     snapshot: InteractionSnapshot,
@@ -96,6 +105,7 @@ export function createGestureRecognizer(
     unregisterDefinition(id) {
       definitions.delete(id)
       lastFiredAt.delete(id)
+      holdStartedAt.delete(id)
     },
 
     registerMatcher(matcher) {
@@ -115,27 +125,87 @@ export function createGestureRecognizer(
 
     reset() {
       lastFiredAt.clear()
+      holdStartedAt.clear()
+      exclusiveGroupLastFiredAt.clear()
       lastMatch = null
+      inkGuardUntilMs = 0
     },
 
     async update(snapshot, hands = []) {
       const ctx = buildContext(snapshot, hands)
+      const primary = ctx.primary
+
+      if (
+        isInkingState(primary?.state) ||
+        isInkingState(primary?.previousState) ||
+        primary?.features.pinch.active
+      ) {
+        // ~450ms after leaving draw/pinch before color/clear/save may fire.
+        inkGuardUntilMs = Math.max(inkGuardUntilMs, ctx.timestampMs + 450)
+      }
+
+      const inkGuarded = ctx.timestampMs < inkGuardUntilMs
 
       let best: GestureMatch | null = null
 
       for (const definition of definitions.values()) {
         if (definition.enabled === false) continue
 
+        const isPose = definition.exclusiveGroup === 'hand-pose'
+        const isColorTap = definition.id === 'pinch-tap'
+        const blocksWhileInking = isPose || isColorTap
+
+        if (
+          blocksWhileInking &&
+          (inkGuarded ||
+            isInkingState(primary?.state) ||
+            primary?.features.pinch.active)
+        ) {
+          holdStartedAt.delete(definition.id)
+          continue
+        }
+
         const matcher = matchers.get(definition.matcher.type)
         if (!matcher) continue
 
         const score = matcher.match(ctx, definition.matcher.params)
-        if (!score) continue
-        if (score.confidence < definition.confidence) continue
+        const passes =
+          Boolean(score) &&
+          score !== null &&
+          score.confidence >= definition.confidence
 
-        const lastAt = lastFiredAt.get(definition.id) ?? 0
-        const cooldown = definition.cooldownMs ?? 800
-        if (ctx.timestampMs - lastAt < cooldown) continue
+        if (!passes || !score) {
+          holdStartedAt.delete(definition.id)
+          continue
+        }
+
+        const holdMs = definition.holdMs ?? 0
+        const holdStart = holdStartedAt.get(definition.id)
+        if (holdStart === undefined) {
+          holdStartedAt.set(definition.id, ctx.timestampMs)
+          if (holdMs > 0) continue
+        } else if (ctx.timestampMs - holdStart < holdMs) {
+          continue
+        }
+
+        const lastAt = lastFiredAt.get(definition.id)
+        if (lastAt !== undefined) {
+          const cooldown = definition.cooldownMs ?? 800
+          if (ctx.timestampMs - lastAt < cooldown) continue
+        }
+
+        const group = definition.exclusiveGroup
+        if (group) {
+          const groupLast = exclusiveGroupLastFiredAt.get(group)
+          if (groupLast !== undefined) {
+            // Short shared window so fist → rock still feels usable.
+            const groupCooldown = Math.min(
+              Math.max(definition.cooldownMs ?? 800, 600),
+              1000,
+            )
+            if (ctx.timestampMs - groupLast < groupCooldown) continue
+          }
+        }
 
         const candidate: GestureMatch = {
           definition,
@@ -152,6 +222,13 @@ export function createGestureRecognizer(
       if (!best) return null
 
       lastFiredAt.set(best.definition.id, best.timestampMs)
+      holdStartedAt.delete(best.definition.id)
+      if (best.definition.exclusiveGroup) {
+        exclusiveGroupLastFiredAt.set(
+          best.definition.exclusiveGroup,
+          best.timestampMs,
+        )
+      }
       lastMatch = best
 
       for (const listener of listeners) listener(best)

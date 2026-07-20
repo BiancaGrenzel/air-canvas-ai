@@ -10,7 +10,7 @@ export type DragDrawingStrategyOptions = {
 export function createDragDrawingStrategy(
   options: DragDrawingStrategyOptions = {},
 ): PinchMotionStrategy {
-  const travelThreshold = options.travelThreshold ?? 0.02
+  const travelThreshold = options.travelThreshold ?? 0.012
   const preferDrawing = options.preferDrawing ?? false
 
   return {

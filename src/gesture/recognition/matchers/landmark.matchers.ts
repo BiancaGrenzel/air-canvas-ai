@@ -4,12 +4,11 @@ import { distance2d } from '../../math'
 import type { GestureMatcher } from './types'
 
 function fingerExtended(mcp: Landmark, pip: Landmark, tip: Landmark): boolean {
-  // Tip farther from wrist-ish MCP than PIP is a simple extension proxy.
-  return distance2d(mcp, tip) > distance2d(mcp, pip) * 1.15
+  return distance2d(mcp, tip) > distance2d(mcp, pip) * 1.12
 }
 
 function fingerFolded(mcp: Landmark, tip: Landmark, scale: number): boolean {
-  return distance2d(mcp, tip) < scale * 0.55
+  return distance2d(mcp, tip) < scale * 0.6
 }
 
 function handScale(hand: HandPose): number {
@@ -19,7 +18,7 @@ function handScale(hand: HandPose): number {
   return Math.max(distance2d(wrist, middle), 0.05)
 }
 
-function scoreOpenPalm(hand: HandPose): number {
+function rawOpenPalmScore(hand: HandPose): number {
   const scale = handScale(hand)
   const tips = [
     HandLandmarkIndex.THUMB_TIP,
@@ -35,12 +34,12 @@ function scoreOpenPalm(hand: HandPose): number {
   for (const tipIndex of tips) {
     const tip = hand.landmarks[tipIndex]
     if (!tip) continue
-    if (distance2d(palm, tip) > scale * 0.85) open += 1
+    if (distance2d(palm, tip) > scale * 0.8) open += 1
   }
   return open / tips.length
 }
 
-function scoreFist(hand: HandPose): number {
+function rawFistScore(hand: HandPose): number {
   const scale = handScale(hand)
   const pairs: Array<[number, number]> = [
     [HandLandmarkIndex.INDEX_FINGER_MCP, HandLandmarkIndex.INDEX_FINGER_TIP],
@@ -59,7 +58,7 @@ function scoreFist(hand: HandPose): number {
   return folded / pairs.length
 }
 
-function scoreVictory(hand: HandPose): number {
+function rawVictoryScore(hand: HandPose): number {
   const indexMcp = hand.landmarks[HandLandmarkIndex.INDEX_FINGER_MCP]
   const indexPip = hand.landmarks[HandLandmarkIndex.INDEX_FINGER_PIP]
   const indexTip = hand.landmarks[HandLandmarkIndex.INDEX_FINGER_TIP]
@@ -91,13 +90,120 @@ function scoreVictory(hand: HandPose): number {
   const middleUp = fingerExtended(middleMcp, middlePip, middleTip)
   const ringDown = fingerFolded(ringMcp, ringTip, scale)
   const pinkyDown = fingerFolded(pinkyMcp, pinkyTip, scale)
+  const tipSpread = distance2d(indexTip, middleTip) > scale * 0.3
 
-  const bits = [indexUp, middleUp, ringDown, pinkyDown]
-  return bits.filter(Boolean).length / bits.length
+  if (!indexUp || !middleUp || !ringDown || !pinkyDown || !tipSpread) {
+    return 0
+  }
+
+  return 1
 }
 
 /**
- * Landmark-based open palm matcher.
+ * Rock / horns 🤘 — index + pinky up, middle + ring folded.
+ */
+function rawRockScore(hand: HandPose): number {
+  const indexMcp = hand.landmarks[HandLandmarkIndex.INDEX_FINGER_MCP]
+  const indexPip = hand.landmarks[HandLandmarkIndex.INDEX_FINGER_PIP]
+  const indexTip = hand.landmarks[HandLandmarkIndex.INDEX_FINGER_TIP]
+  const middleMcp = hand.landmarks[HandLandmarkIndex.MIDDLE_FINGER_MCP]
+  const middleTip = hand.landmarks[HandLandmarkIndex.MIDDLE_FINGER_TIP]
+  const ringMcp = hand.landmarks[HandLandmarkIndex.RING_FINGER_MCP]
+  const ringTip = hand.landmarks[HandLandmarkIndex.RING_FINGER_TIP]
+  const pinkyMcp = hand.landmarks[HandLandmarkIndex.PINKY_MCP]
+  const pinkyPip = hand.landmarks[HandLandmarkIndex.PINKY_PIP]
+  const pinkyTip = hand.landmarks[HandLandmarkIndex.PINKY_TIP]
+
+  if (
+    !indexMcp ||
+    !indexPip ||
+    !indexTip ||
+    !middleMcp ||
+    !middleTip ||
+    !ringMcp ||
+    !ringTip ||
+    !pinkyMcp ||
+    !pinkyPip ||
+    !pinkyTip
+  ) {
+    return 0
+  }
+
+  const scale = handScale(hand)
+  const indexUp = fingerExtended(indexMcp, indexPip, indexTip)
+  const pinkyUp = fingerExtended(pinkyMcp, pinkyPip, pinkyTip)
+  const middleDown = fingerFolded(middleMcp, middleTip, scale)
+  const ringDown = fingerFolded(ringMcp, ringTip, scale)
+  const hornSpread = distance2d(indexTip, pinkyTip) > scale * 0.45
+
+  if (!indexUp || !pinkyUp || !middleDown || !ringDown || !hornSpread) {
+    return 0
+  }
+
+  return 1
+}
+
+/**
+ * Soft mutual exclusion — prefer the clearer pose without zeroing borderline frames.
+ */
+function scoreOpenPalm(hand: HandPose): number {
+  const open = rawOpenPalmScore(hand)
+  const fist = rawFistScore(hand)
+  if (fist >= open) return open * 0.35
+  return open
+}
+
+function scoreFist(hand: HandPose): number {
+  const fist = rawFistScore(hand)
+  const open = rawOpenPalmScore(hand)
+  if (open >= fist) return fist * 0.35
+  return fist
+}
+
+function scoreVictory(hand: HandPose): number {
+  const victory = rawVictoryScore(hand)
+  if (victory <= 0) return 0
+  if (rawRockScore(hand) > 0) return 0
+  const open = rawOpenPalmScore(hand)
+  const fist = rawFistScore(hand)
+  if (open > 0.7 || fist > 0.7) return 0
+  return victory
+}
+
+function scoreRock(hand: HandPose): number {
+  const rock = rawRockScore(hand)
+  if (rock <= 0) return 0
+  if (rawVictoryScore(hand) > 0) return 0
+  const fist = rawFistScore(hand)
+  if (fist > 0.7) return 0
+  return rock
+}
+
+function bestHandScore(
+  hands: readonly HandPose[],
+  scoreOf: (hand: HandPose) => number,
+  primaryTrackId: string | null,
+  minScore: number,
+  minHandConfidence: number,
+): { confidence: number; trackId: string | null } | null {
+  let best = 0
+  let trackId: string | null = primaryTrackId
+
+  hands.forEach((hand, index) => {
+    if (hand.confidence < minHandConfidence) return
+    const score = scoreOf(hand)
+    if (score > best) {
+      best = score
+      trackId = `${hand.handedness}-${index}`
+    }
+  })
+
+  if (best < minScore) return null
+  return { confidence: best, trackId }
+}
+
+/**
+ * Landmark-based open palm matcher (available for custom definitions).
  * params: { minScore?: number }
  */
 export function createOpenPalmMatcher(): GestureMatcher {
@@ -105,20 +211,34 @@ export function createOpenPalmMatcher(): GestureMatcher {
     type: 'landmark-open-palm',
     match(ctx, params) {
       const minScore =
-        typeof params?.minScore === 'number' ? params.minScore : 0.75
-      let best = 0
-      let trackId: string | null = ctx.primary?.trackId ?? null
+        typeof params?.minScore === 'number' ? params.minScore : 0.7
+      return bestHandScore(
+        ctx.hands,
+        scoreOpenPalm,
+        ctx.primary?.trackId ?? null,
+        minScore,
+        0.45,
+      )
+    },
+  }
+}
 
-      ctx.hands.forEach((hand, index) => {
-        const score = scoreOpenPalm(hand) * hand.confidence
-        if (score > best) {
-          best = score
-          trackId = `${hand.handedness}-${index}`
-        }
-      })
-
-      if (best < minScore) return null
-      return { confidence: best, trackId }
+/**
+ * Landmark-based rock / horns matcher (clear canvas).
+ */
+export function createRockMatcher(): GestureMatcher {
+  return {
+    type: 'landmark-rock',
+    match(ctx, params) {
+      const minScore =
+        typeof params?.minScore === 'number' ? params.minScore : 0.85
+      return bestHandScore(
+        ctx.hands,
+        scoreRock,
+        ctx.primary?.trackId ?? null,
+        minScore,
+        0.5,
+      )
     },
   }
 }
@@ -131,20 +251,14 @@ export function createFistMatcher(): GestureMatcher {
     type: 'landmark-fist',
     match(ctx, params) {
       const minScore =
-        typeof params?.minScore === 'number' ? params.minScore : 0.75
-      let best = 0
-      let trackId: string | null = ctx.primary?.trackId ?? null
-
-      ctx.hands.forEach((hand, index) => {
-        const score = scoreFist(hand) * hand.confidence
-        if (score > best) {
-          best = score
-          trackId = `${hand.handedness}-${index}`
-        }
-      })
-
-      if (best < minScore) return null
-      return { confidence: best, trackId }
+        typeof params?.minScore === 'number' ? params.minScore : 0.7
+      return bestHandScore(
+        ctx.hands,
+        scoreFist,
+        ctx.primary?.trackId ?? null,
+        minScore,
+        0.45,
+      )
     },
   }
 }
@@ -157,20 +271,14 @@ export function createVictoryMatcher(): GestureMatcher {
     type: 'landmark-victory',
     match(ctx, params) {
       const minScore =
-        typeof params?.minScore === 'number' ? params.minScore : 0.75
-      let best = 0
-      let trackId: string | null = ctx.primary?.trackId ?? null
-
-      ctx.hands.forEach((hand, index) => {
-        const score = scoreVictory(hand) * hand.confidence
-        if (score > best) {
-          best = score
-          trackId = `${hand.handedness}-${index}`
-        }
-      })
-
-      if (best < minScore) return null
-      return { confidence: best, trackId }
+        typeof params?.minScore === 'number' ? params.minScore : 0.85
+      return bestHandScore(
+        ctx.hands,
+        scoreVictory,
+        ctx.primary?.trackId ?? null,
+        minScore,
+        0.5,
+      )
     },
   }
 }

@@ -5,7 +5,10 @@ import {
   type GestureFeatureDetector,
 } from './feature-detector'
 import { createMotionDetector } from './motion.detector'
-import { createPinchDetector } from './pinch.detector'
+import {
+  createPinchDetector,
+  type PinchDetectorOptions,
+} from './pinch.detector'
 import { createPointerDetector } from './pointer.detector'
 import { createPresenceDetector } from './presence.detector'
 
@@ -23,10 +26,12 @@ export type { PinchDetectorOptions } from './pinch.detector'
 export { createPointerDetector } from './pointer.detector'
 export { createMotionDetector } from './motion.detector'
 
-export function createDefaultFeatureDetectors(): GestureFeatureDetector[] {
+export function createDefaultFeatureDetectors(
+  options: { pinch?: PinchDetectorOptions } = {},
+): GestureFeatureDetector[] {
   return [
     createPresenceDetector(),
-    createPinchDetector(),
+    createPinchDetector(options.pinch),
     createPointerDetector(),
     createMotionDetector(),
   ]

@@ -16,6 +16,16 @@ export type GestureDefinition = {
   readonly action: string
   readonly matcher: GestureMatcherRef
   readonly cooldownMs?: number
+  /**
+   * Pose must stay matched continuously for this long before firing.
+   * Reduces false triggers during hand transitions (e.g. fist ↔ open palm).
+   */
+  readonly holdMs?: number
+  /**
+   * Gestures sharing a group share a cooldown after any member fires.
+   * Use for mutually conflicting poses (fist / rock / victory).
+   */
+  readonly exclusiveGroup?: string
   readonly enabled?: boolean
 }
 
@@ -34,6 +44,7 @@ export function createGestureDefinition(
     confidence: clamp01(input.confidence),
     enabled: input.enabled ?? true,
     cooldownMs: input.cooldownMs ?? 800,
+    holdMs: input.holdMs ?? 0,
   }
 }
 

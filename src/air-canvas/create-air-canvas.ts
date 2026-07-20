@@ -1,7 +1,4 @@
-import type { InteractionState } from '@/domain'
-
 import { DEFAULT_AIR_CANVAS_SETTINGS } from './defaults'
-import { resolveDrawAction } from './interaction'
 import { fillBackground, paintStroke } from './paint'
 import { appendStrokePoint, createStroke } from './stroke'
 import type {
@@ -11,6 +8,18 @@ import type {
   AirCanvasStroke,
   CreateAirCanvasOptions,
 } from './types'
+
+/** Rejoin stroke fragments when pinch tracking drops mid-line. */
+const STROKE_RESUME_MS = 700
+const STROKE_RESUME_DISTANCE = 0.35
+/** Keep ink alive after leaving Drawing (frames ≈ vision updates). */
+const INK_RELEASE_GRACE_FRAMES = 12
+
+function pointDistance(a: AirCanvasPoint, b: AirCanvasPoint): number {
+  const dx = a.x - b.x
+  const dy = a.y - b.y
+  return Math.hypot(dx, dy)
+}
 
 /**
  * AirCanvas engine — freehand ink via Canvas API.
@@ -32,7 +41,9 @@ export function createAirCanvas(
 
   const strokes: AirCanvasStroke[] = []
   let activeStroke: AirCanvasStroke | null = null
-  let previousState: InteractionState | null = null
+  let lastStrokeEndedAt = 0
+  let lastStrokeEndPoint: AirCanvasPoint | null = null
+  let framesWithoutInk = 0
 
   const ensureContext = () => {
     if (!canvas) {
@@ -76,6 +87,35 @@ export function createAirCanvas(
     thickness: settings.thickness,
   })
 
+  const tryResumeStroke = (point: AirCanvasPoint): boolean => {
+    if (activeStroke || strokes.length === 0 || !lastStrokeEndPoint) {
+      return false
+    }
+    const elapsed = Date.now() - lastStrokeEndedAt
+    if (elapsed > STROKE_RESUME_MS) return false
+    if (pointDistance(point, lastStrokeEndPoint) > STROKE_RESUME_DISTANCE) {
+      return false
+    }
+
+    const previous = strokes.pop()
+    if (!previous) return false
+
+    const style = currentStyle()
+    if (
+      previous.style.tool !== style.tool ||
+      previous.style.color !== style.color ||
+      previous.style.thickness !== style.thickness
+    ) {
+      strokes.push(previous)
+      return false
+    }
+
+    activeStroke = appendStrokePoint(previous, point)
+    lastStrokeEndPoint = null
+    redraw()
+    return true
+  }
+
   const engine: AirCanvasEngine = {
     attach(nextCanvas) {
       canvas = nextCanvas
@@ -91,7 +131,9 @@ export function createAirCanvas(
       canvas = null
       ctx = null
       activeStroke = null
-      previousState = null
+      lastStrokeEndedAt = 0
+      lastStrokeEndPoint = null
+      framesWithoutInk = 0
     },
 
     setSize(width, height) {
@@ -121,7 +163,12 @@ export function createAirCanvas(
       if (activeStroke) {
         engine.endStroke()
       }
+      if (tryResumeStroke(point)) {
+        framesWithoutInk = 0
+        return
+      }
       activeStroke = createStroke(currentStyle(), point)
+      framesWithoutInk = 0
       redraw()
     },
 
@@ -136,24 +183,41 @@ export function createAirCanvas(
 
     endStroke() {
       if (!activeStroke) return
+      const last = activeStroke.points[activeStroke.points.length - 1]
+      lastStrokeEndPoint = last ? { ...last } : null
+      lastStrokeEndedAt = Date.now()
       strokes.push(activeStroke)
       activeStroke = null
+      framesWithoutInk = 0
       redraw()
     },
 
     handleInteraction({ state, point }) {
-      const action = resolveDrawAction(previousState, state, Boolean(point))
-      previousState = state
+      const wantsInk = state === 'Drawing'
 
-      if (action === 'begin' && point) {
-        engine.beginStroke(point)
+      if (wantsInk && point) {
+        framesWithoutInk = 0
+        if (!activeStroke) {
+          engine.beginStroke(point)
+        } else {
+          activeStroke = appendStrokePoint(activeStroke, point)
+          redraw()
+        }
         return
       }
-      if (action === 'continue' && point) {
-        engine.continueStroke(point)
-        return
-      }
-      if (action === 'end') {
+
+      // Sticky ink through brief Drawing dropouts from pinch noise.
+      if (activeStroke) {
+        framesWithoutInk += 1
+
+        if (framesWithoutInk <= INK_RELEASE_GRACE_FRAMES) {
+          if (point) {
+            activeStroke = appendStrokePoint(activeStroke, point)
+            redraw()
+          }
+          return
+        }
+
         engine.endStroke()
       }
     },
@@ -161,6 +225,9 @@ export function createAirCanvas(
     clear() {
       strokes.length = 0
       activeStroke = null
+      lastStrokeEndedAt = 0
+      lastStrokeEndPoint = null
+      framesWithoutInk = 0
       redraw()
     },
 

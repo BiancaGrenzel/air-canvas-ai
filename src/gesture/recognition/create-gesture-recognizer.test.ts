@@ -174,4 +174,124 @@ describe('createGestureRecognizer', () => {
     const match = await recognizer.update(createEmptyInteractionSnapshot(10))
     expect(match).toBeNull()
   })
+
+  it('requires holdMs before firing a continuous match', async () => {
+    const executed: string[] = []
+
+    const recognizer = createGestureRecognizer({
+      definitions: [
+        createGestureDefinition({
+          id: 'hold-hover',
+          name: 'Hold Hover',
+          description: 'test',
+          confidence: 0.4,
+          action: 'record',
+          matcher: {
+            type: 'interaction-hold',
+            params: { state: 'Hover' },
+          },
+          holdMs: 300,
+          cooldownMs: 0,
+        }),
+      ],
+      commandFactories: [
+        createCallbackCommandFactory('record', (ctx) => {
+          executed.push(ctx.match.definition.id)
+        }),
+      ],
+    })
+
+    const base = snapshotWith({
+      state: 'Hover',
+      previousState: 'Hover',
+      features: {
+        ...createIdleGestureFeatures(),
+        present: true,
+        confidence: 0.9,
+      },
+    })
+
+    await recognizer.update({ ...base, timestampMs: 1000 })
+    expect(executed).toHaveLength(0)
+
+    await recognizer.update({ ...base, timestampMs: 1200 })
+    expect(executed).toHaveLength(0)
+
+    await recognizer.update({ ...base, timestampMs: 1350 })
+    expect(executed).toEqual(['hold-hover'])
+  })
+
+  it('blocks exclusive-group peers after one pose fires', async () => {
+    const executed: string[] = []
+
+    const recognizer = createGestureRecognizer({
+      definitions: [
+        createGestureDefinition({
+          id: 'pose-a',
+          name: 'Pose A',
+          description: 'test',
+          confidence: 0.4,
+          action: 'record',
+          matcher: {
+            type: 'interaction-enter',
+            params: { state: 'Hover' },
+          },
+          holdMs: 0,
+          cooldownMs: 2000,
+          exclusiveGroup: 'poses',
+        }),
+        createGestureDefinition({
+          id: 'pose-b',
+          name: 'Pose B',
+          description: 'test',
+          confidence: 0.4,
+          action: 'record',
+          matcher: {
+            type: 'interaction-enter',
+            params: { state: 'Pinch' },
+          },
+          holdMs: 0,
+          cooldownMs: 2000,
+          exclusiveGroup: 'poses',
+        }),
+      ],
+      commandFactories: [
+        createCallbackCommandFactory('record', (ctx) => {
+          executed.push(ctx.match.definition.id)
+        }),
+      ],
+    })
+
+    await recognizer.update(
+      snapshotWith({
+        state: 'Hover',
+        previousState: 'Tracking',
+        changed: true,
+        features: {
+          ...createIdleGestureFeatures(),
+          present: true,
+          confidence: 0.9,
+        },
+      }),
+    )
+    expect(executed).toEqual(['pose-a'])
+
+    await recognizer.update({
+      ...snapshotWith({
+        state: 'Pinch',
+        previousState: 'Hover',
+        changed: true,
+        features: {
+          ...createIdleGestureFeatures(),
+          present: true,
+          confidence: 0.95,
+          pinch: { active: true, strength: 0.9, distance: 0.02 },
+        },
+      }),
+      timestampMs: 1300,
+    })
+
+    // Still blocked by exclusive group cooldown (~900ms+).
+    expect(executed).toEqual(['pose-a'])
+  })
 })

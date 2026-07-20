@@ -9,6 +9,7 @@ import { createEmptyInteractionSnapshot } from '@/domain'
 import {
   createDefaultFeatureDetectors,
   type GestureFeatureDetector,
+  type PinchDetectorOptions,
 } from '../features'
 import {
   createDefaultStateHandlers,
@@ -33,6 +34,8 @@ export type CreateGestureEngineOptions = CreateStateHandlersOptions & {
   stateHandlers?: Map<InteractionState, InteractionStateHandler>
   /** Max hands to track (1–2). */
   maxHands?: 1 | 2
+  /** Pinch activation thresholds (passed to the default pinch detector). */
+  pinch?: PinchDetectorOptions
 }
 
 /**
@@ -43,7 +46,8 @@ export function createGestureEngine(
   options: CreateGestureEngineOptions = {},
 ): GestureEngine {
   const detectors = [
-    ...(options.featureDetectors ?? createDefaultFeatureDetectors()),
+    ...(options.featureDetectors ??
+      createDefaultFeatureDetectors({ pinch: options.pinch })),
   ]
   const handlers = options.stateHandlers ?? createDefaultStateHandlers(options)
   const maxHands = options.maxHands ?? 2

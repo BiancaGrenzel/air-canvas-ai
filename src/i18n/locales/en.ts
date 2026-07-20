@@ -82,7 +82,7 @@ export const en = {
   studio: {
     title: 'Studio',
     subtitle:
-      'Open the camera, then pinch + move to draw on AirCanvas. Pose commands (open palm, fist, victory) are listed below.',
+      'Open the camera, then pinch + move to draw on AirCanvas. Pose commands (rock, fist, victory) are listed below.',
     help: 'Help',
     session: 'session',
     camera: 'camera',
@@ -128,13 +128,13 @@ export const en = {
     controlsGuideStop: 'Stop drawing: release the pinch (back to Hover).',
     controlsGuideEraseStroke:
       'Erase strokes: click Eraser on AirCanvas, then pinch + move like drawing.',
-    controlsGuideClearAll: 'Clear everything: open palm (or the Clear button).',
+    controlsGuideClearAll: 'Clear everything: rock 🤘 (or the Clear button).',
     commandsListTitle: 'Pose commands',
     lastMatch: 'Last recognition',
     noneYet: 'None yet',
     actionLog: 'Action log',
     actionLogEmpty:
-      'Try open palm, fist, victory, or a quick pinch tap (not a long drag).',
+      'Try rock, fist, victory, or a quick pinch tap (not a long drag).',
     airCanvasTitle: 'AirCanvas',
     airCanvasDesc:
       'Ink while state is Drawing (pinch + move). Stops when you release the pinch.',
@@ -166,10 +166,10 @@ export const en = {
       '1) Open the camera. 2) Pinch thumb + index. 3) Move to paint. 4) Release to stop. The badge should show Drawing while you paint.',
     helpEraseTitle: 'Erasing',
     helpEraseBody:
-      'Stroke eraser: choose Eraser, then pinch + move. Wipe the whole canvas: open palm, or Clear.',
+      'Stroke eraser: choose Eraser, then pinch + move. Wipe the whole canvas: rock 🤘, or Clear.',
     helpCommandsTitle: 'Pose commands',
     helpCommandsBody:
-      'Open palm → clear all. Fist or quick pinch tap → change color. Victory (V) → save PNG. “Start Drawing” only logs when Drawing begins — it is not how you start painting.',
+      'Rock 🤘 → clear all. Fist or quick pinch tap → change color. Victory (V) → save PNG. “Start Drawing” only logs when Drawing begins — it is not how you start painting.',
     gotIt: 'Got it',
     logRecognized: '{gesture} → {action}',
     logConfidence: '{gesture} · {confidence}%',
@@ -252,11 +252,11 @@ export const en = {
     },
   },
   gesture: {
-    'open-palm': {
-      name: 'Open Palm',
+    rock: {
+      name: 'Rock',
       effect: 'Clear all',
       description:
-        'How: open your hand, palm toward the camera. Effect: erases the entire drawing.',
+        'How: index + pinky up, middle + ring folded (🤘). Effect: erases the entire drawing.',
     },
     fist: {
       name: 'Fist',

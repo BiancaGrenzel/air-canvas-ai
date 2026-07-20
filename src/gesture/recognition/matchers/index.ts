@@ -1,6 +1,7 @@
 import {
   createFistMatcher,
   createOpenPalmMatcher,
+  createRockMatcher,
   createVictoryMatcher,
 } from './landmark.matchers'
 import {
@@ -27,6 +28,7 @@ export {
 export {
   createFistMatcher,
   createOpenPalmMatcher,
+  createRockMatcher,
   createVictoryMatcher,
 } from './landmark.matchers'
 
@@ -35,6 +37,7 @@ export function createDefaultGestureMatchers(): GestureMatcher[] {
     createInteractionEnterMatcher(),
     createInteractionHoldMatcher(),
     createPinchTapMatcher(),
+    createRockMatcher(),
     createOpenPalmMatcher(),
     createFistMatcher(),
     createVictoryMatcher(),

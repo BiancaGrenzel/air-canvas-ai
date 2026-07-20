@@ -1,7 +1,7 @@
 import type { InteractionState } from '@/domain'
 
 import { createDraggingState } from './dragging.state'
-import { createDrawingState } from './drawing.state'
+import { createDrawingState, type DrawingStateOptions } from './drawing.state'
 import { createHoverState } from './hover.state'
 import { createLostState } from './lost.state'
 import {
@@ -25,6 +25,7 @@ export { createHoverState } from './hover.state'
 export { createPinchState } from './pinch.state'
 export { createDraggingState } from './dragging.state'
 export { createDrawingState } from './drawing.state'
+export type { DrawingStateOptions } from './drawing.state'
 export { createReleasedState } from './released.state'
 export { createDragDrawingStrategy } from './pinch-motion.strategy'
 export type { DragDrawingStrategyOptions } from './pinch-motion.strategy'
@@ -33,6 +34,7 @@ export type CreateStateHandlersOptions = {
   motionStrategy?: PinchMotionStrategy
   motion?: DragDrawingStrategyOptions
   trackingSettleFrames?: number
+  drawing?: DrawingStateOptions
 }
 
 export function createDefaultStateHandlers(
@@ -47,7 +49,7 @@ export function createDefaultStateHandlers(
     createHoverState(),
     createPinchState(motionStrategy),
     createDraggingState(),
-    createDrawingState(),
+    createDrawingState(options.drawing),
     createReleasedState(),
   ]
 

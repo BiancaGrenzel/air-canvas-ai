@@ -73,6 +73,8 @@ export function createPinchTapMatcher(): GestureMatcher {
       const maxTravel = readNumber(params, 'maxTravel', 0.04)
       const primary = ctx.primary
       if (!primary) return null
+      // Only the transition frame into Released (not lingering).
+      if (!primary.changed) return null
       if (primary.state !== 'Released') return null
       if (primary.previousState !== 'Pinch') return null
       if (primary.features.pinchTravel > maxTravel) return null

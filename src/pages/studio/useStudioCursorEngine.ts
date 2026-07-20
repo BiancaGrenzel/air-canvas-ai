@@ -10,8 +10,10 @@ import type { PointerPoint } from '@/domain'
 import { useSettingsStore } from '@/store'
 
 const BASE_STUDIO_CURSOR_CONFIG: Partial<CursorEngineConfig> = {
-  acceleration: 0.35,
+  acceleration: 0.2,
   bounds: { minX: 0, minY: 0, maxX: 1, maxY: 1 },
+  // More responsive while drawing — less lag / overshoot on strokes.
+  oneEuro: { minCutoff: 1.6, beta: 0.025, dCutoff: 1.0 },
 }
 
 /**

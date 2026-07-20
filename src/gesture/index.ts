@@ -56,6 +56,7 @@ export {
   createNoopCommandFactory,
   createOpenPalmMatcher,
   createPinchTapMatcher,
+  createRockMatcher,
   createVictoryMatcher,
   type CreateGestureRecognizerOptions,
   type GestureCommand,

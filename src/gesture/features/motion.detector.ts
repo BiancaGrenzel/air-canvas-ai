@@ -16,7 +16,7 @@ export function createMotionDetector(): GestureFeatureDetector {
 
       if (!prev?.pointer || !current) {
         draft.pointerDelta = 0
-        draft.pinchTravel = draft.pinch.active ? 0 : 0
+        draft.pinchTravel = 0
         return
       }
 

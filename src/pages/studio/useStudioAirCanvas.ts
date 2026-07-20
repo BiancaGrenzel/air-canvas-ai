@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import type { CanvasActionPort } from '@/application/ports'
 import {
@@ -31,6 +31,7 @@ export function useStudioAirCanvas(
     }),
   )
   const [tool, setToolState] = useState<AirCanvasTool>('brush')
+  const lastPointRef = useRef<CursorPoint | null>(null)
 
   useEffect(() => {
     return () => {
@@ -47,16 +48,25 @@ export function useStudioAirCanvas(
   }, [engine, thickness])
 
   useEffect(() => {
+    if (cursor) {
+      lastPointRef.current = cursor
+    }
+  }, [cursor])
+
+  useEffect(() => {
     if (!enabled) {
       if (engine.isStrokeActive()) {
         engine.endStroke()
       }
+      lastPointRef.current = null
       return
     }
 
+    const point = cursor ?? lastPointRef.current
+
     engine.handleInteraction({
       state,
-      point: cursor,
+      point,
     })
   }, [engine, enabled, state, cursor])
 

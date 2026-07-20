@@ -25,6 +25,7 @@ export {
   createInteractionHoldMatcher,
   createOpenPalmMatcher,
   createPinchTapMatcher,
+  createRockMatcher,
   createVictoryMatcher,
   type GestureMatchScore,
   type GestureMatcher,

@@ -4,10 +4,7 @@ import { AIR_CANVAS_COLOR_PRESETS } from '@/air-canvas'
 import {
   createActionEngine,
   createCanvasActions,
-  createFutureActionPlaceholders,
   createGestureCommandFactoriesFromActions,
-  type ActionDefinition,
-  type ActionEngine,
 } from '@/actions'
 import type { CanvasActionPort } from '@/application/ports'
 import type {
@@ -49,18 +46,16 @@ export function useStudioGestureRecognition(
   const [log, setLog] = useState<GestureLogEntry[]>([])
   const [definitions] = useState(() => createBuiltinGestureDefinitions())
 
-  const { actionEngine, actionCatalog, canvasCommands } = useMemo(() => {
+  const { actionEngine, canvasCommands } = useMemo(() => {
     const canvasCommands = createCanvasActions(canvasActionPort, {
       palette: AIR_CANVAS_COLOR_PRESETS,
     })
-    const placeholders = createFutureActionPlaceholders()
     const engine = createActionEngine({
-      commands: [...canvasCommands, ...placeholders],
+      commands: canvasCommands,
     })
 
     return {
       actionEngine: engine,
-      actionCatalog: engine.list(),
       canvasCommands,
     }
   }, [canvasActionPort])
@@ -125,10 +120,5 @@ export function useStudioGestureRecognition(
     lastMatch,
     log,
     definitions,
-    actionEngine,
-    actionCatalog,
-    dispatchAction: (id: string) => actionEngine.dispatch(id, { source: 'ui' }),
   }
 }
-
-export type { ActionDefinition, ActionEngine }

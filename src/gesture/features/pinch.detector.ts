@@ -1,6 +1,6 @@
 import { HandLandmarkIndex } from '@/domain'
 
-import { clamp01, distance2d, midpoint2d } from '../math'
+import { clamp01, distance2d } from '../math'
 import type {
   FeatureDetectorContext,
   GestureFeatureDetector,
@@ -8,17 +8,49 @@ import type {
 } from './feature-detector'
 
 export type PinchDetectorOptions = {
-  /** Normalized distance below which pinch is active. */
+  /** Normalized distance below which pinch activates (raw, snappy). */
   activateBelow?: number
-  /** Hysteresis: release above this distance. */
+  /** Hysteresis: release above this (smoothed) distance. */
   releaseAbove?: number
+  /**
+   * EMA for release only (0–1). Lower = stickier hold while drawing.
+   * Activation always uses raw distance so pinch feels instant.
+   */
+  releaseSmoothAlpha?: number
+}
+
+/**
+ * True fist: all four fingers folded (including index).
+ * Only used to block *starting* a pinch — never cancels mid-draw.
+ */
+function looksLikeClosedFist(
+  landmarks: FeatureDetectorContext['hand']['landmarks'],
+  handScale: number,
+): boolean {
+  const pairs: Array<[number, number]> = [
+    [HandLandmarkIndex.INDEX_FINGER_MCP, HandLandmarkIndex.INDEX_FINGER_TIP],
+    [HandLandmarkIndex.MIDDLE_FINGER_MCP, HandLandmarkIndex.MIDDLE_FINGER_TIP],
+    [HandLandmarkIndex.RING_FINGER_MCP, HandLandmarkIndex.RING_FINGER_TIP],
+    [HandLandmarkIndex.PINKY_MCP, HandLandmarkIndex.PINKY_TIP],
+  ]
+
+  let folded = 0
+  for (const [mcpIndex, tipIndex] of pairs) {
+    const mcp = landmarks[mcpIndex]
+    const tip = landmarks[tipIndex]
+    if (!mcp || !tip) continue
+    if (distance2d(mcp, tip) < handScale * 0.55) folded += 1
+  }
+
+  return folded >= 4
 }
 
 export function createPinchDetector(
   options: PinchDetectorOptions = {},
 ): GestureFeatureDetector {
-  const activateBelow = options.activateBelow ?? 0.045
-  const releaseAbove = options.releaseAbove ?? 0.07
+  const activateBelow = options.activateBelow ?? 0.12
+  const releaseAbove = options.releaseAbove ?? 0.24
+  const releaseSmoothAlpha = options.releaseSmoothAlpha ?? 0.4
 
   return {
     id: 'pinch',
@@ -27,29 +59,38 @@ export function createPinchDetector(
       const index = ctx.hand.landmarks[HandLandmarkIndex.INDEX_FINGER_TIP]
       const wrist = ctx.hand.landmarks[HandLandmarkIndex.WRIST]
       const middleMcp = ctx.hand.landmarks[HandLandmarkIndex.MIDDLE_FINGER_MCP]
+      const wasActive = ctx.previous?.pinch.active ?? false
+      const prevDistance = ctx.previous?.pinch.distance
 
+      // Brief landmark drop while pinching — keep previous pinch (no stroke chop).
       if (!thumb || !index || !wrist || !middleMcp) {
+        if (wasActive && ctx.previous) {
+          draft.pinch = { ...ctx.previous.pinch }
+          return
+        }
         draft.pinch = { active: false, distance: 1, strength: 0 }
         return
       }
 
       const handScale = Math.max(distance2d(wrist, middleMcp), 0.05)
-      const raw = distance2d(thumb, index)
-      const distance = raw / handScale
-      const wasActive = ctx.previous?.pinch.active ?? false
+      const raw = distance2d(thumb, index) / handScale
 
-      const active = wasActive
-        ? distance <= releaseAbove
-        : distance <= activateBelow
+      // Store smoothed distance for sticky release; activate on raw for snappy start.
+      const distance =
+        wasActive && typeof prevDistance === 'number'
+          ? prevDistance * (1 - releaseSmoothAlpha) + raw * releaseSmoothAlpha
+          : raw
 
-      const strength = clamp01(1 - distance / releaseAbove)
-
-      draft.pinch = { active, distance, strength }
-
-      // Prefer pinch midpoint as pointer while pinching.
-      if (active) {
-        draft.pointer = midpoint2d(thumb, index)
+      if (!wasActive && looksLikeClosedFist(ctx.hand.landmarks, handScale)) {
+        draft.pinch = { active: false, distance: raw, strength: 0 }
+        return
       }
+
+      const active = wasActive ? distance <= releaseAbove : raw <= activateBelow
+
+      const strength = clamp01(1 - (wasActive ? distance : raw) / releaseAbove)
+
+      draft.pinch = { active, distance: wasActive ? distance : raw, strength }
     },
   }
 }

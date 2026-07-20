@@ -20,14 +20,7 @@ import { useStudioGestureRecognition } from './useStudioGestureRecognition'
 import { useStudioHandVision } from './useStudioHandVision'
 
 export function StudioPage() {
-  const {
-    t,
-    actionName,
-    actionDescription,
-    gestureName,
-    gestureDescription,
-    gestureEffect,
-  } = useTranslation()
+  const { t, gestureName, gestureDescription, gestureEffect } = useTranslation()
   const sessionStatus = useSessionStore((state) => state.status)
   const mirrored = useSettingsStore((s) => s.mirrored)
   const showLandmarks = useSettingsStore((s) => s.showLandmarks)
@@ -95,8 +88,6 @@ export function StudioPage() {
     lastMatch: recognizedGesture,
     log: gestureLog,
     definitions: gestureDefinitions,
-    actionCatalog,
-    dispatchAction,
   } = useStudioGestureRecognition(
     interactionSnapshot,
     visionResults,
@@ -471,45 +462,6 @@ export function StudioPage() {
               </dd>
             </div>
           </dl>
-        </Panel>
-
-        <Panel
-          title={t('studio.actionEngineTitle')}
-          description={t('studio.actionEngineDesc')}
-        >
-          <ul className="space-y-2">
-            {actionCatalog.map((action) => (
-              <li
-                key={action.id}
-                className="border-border bg-surface-muted flex items-start justify-between gap-2 rounded-md border px-3 py-2"
-              >
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <p className="text-ink text-sm font-medium">
-                      {actionName(action.id)}
-                    </p>
-                    <Badge variant={action.enabled ? 'accent' : 'outline'}>
-                      {t(`domain.${action.domain}`)}
-                    </Badge>
-                  </div>
-                  <p className="text-ink-muted mt-1 text-xs">
-                    {actionDescription(action.id)}
-                  </p>
-                </div>
-                {action.enabled && action.domain === 'canvas' ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      void dispatchAction(action.id)
-                    }}
-                  >
-                    {t('studio.run')}
-                  </Button>
-                ) : null}
-              </li>
-            ))}
-          </ul>
         </Panel>
 
         <Panel

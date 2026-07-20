@@ -84,7 +84,7 @@ export const pt: Messages = {
   studio: {
     title: 'Estúdio',
     subtitle:
-      'Abra a câmera e use pinça + movimento para desenhar no AirCanvas. Os comandos de pose (mão aberta, punho, vitória) estão na lista abaixo.',
+      'Abra a câmera e use pinça + movimento para desenhar no AirCanvas. Os comandos de pose (rock, punho, vitória) estão na lista abaixo.',
     help: 'Ajuda',
     session: 'sessão',
     camera: 'câmera',
@@ -131,13 +131,13 @@ export const pt: Messages = {
     controlsGuideStop: 'Parar de desenhar: solte a pinça (volta para Hover).',
     controlsGuideEraseStroke:
       'Apagar traços: clique em Borracha no AirCanvas e depois pinça + mova.',
-    controlsGuideClearAll: 'Apagar tudo: mão aberta (ou o botão Limpar).',
+    controlsGuideClearAll: 'Apagar tudo: rock 🤘 (ou o botão Limpar).',
     commandsListTitle: 'Comandos de pose',
     lastMatch: 'Último reconhecimento',
     noneYet: 'Nenhum ainda',
     actionLog: 'Log de ações',
     actionLogEmpty:
-      'Tente mão aberta, punho, vitória ou um toque rápido de pinça (sem arrastar).',
+      'Tente rock, punho, vitória ou um toque rápido de pinça (sem arrastar).',
     airCanvasTitle: 'AirCanvas',
     airCanvasDesc:
       'Pinta enquanto o estado for Desenhando (pinça + mover). Para ao soltar a pinça.',
@@ -170,10 +170,10 @@ export const pt: Messages = {
       '1) Abra a câmera. 2) Una polegar + indicador. 3) Mova para pintar. 4) Solte para parar. O badge deve mostrar Desenhando enquanto pinta.',
     helpEraseTitle: 'Apagar',
     helpEraseBody:
-      'Borracha de traço: escolha Borracha e pinça + mova. Apagar tudo: mão aberta, ou Limpar.',
+      'Borracha de traço: escolha Borracha e pinça + mova. Apagar tudo: rock 🤘, ou Limpar.',
     helpCommandsTitle: 'Comandos de pose',
     helpCommandsBody:
-      'Mão aberta → apaga tudo. Punho ou toque rápido de pinça → troca cor. Vitória (V) → salva PNG. “Desenho iniciado” só registra no log quando o Drawing começa — não é o jeito de começar a pintar.',
+      'Rock 🤘 → apaga tudo. Punho ou toque rápido de pinça → troca cor. Vitória (V) → salva PNG. “Desenho iniciado” só registra no log quando o Drawing começa — não é o jeito de começar a pintar.',
     gotIt: 'Entendi',
     logRecognized: '{gesture} → {action}',
     logConfidence: '{gesture} · {confidence}%',
@@ -256,11 +256,11 @@ export const pt: Messages = {
     },
   },
   gesture: {
-    'open-palm': {
-      name: 'Mão aberta',
+    rock: {
+      name: 'Rock',
       effect: 'Apaga tudo',
       description:
-        'Como: abra a mão com a palma para a câmera. Efeito: apaga o desenho inteiro.',
+        'Como: indicador + mindinho para cima, médio + anelar dobrados (🤘). Efeito: apaga o desenho inteiro.',
     },
     fist: {
       name: 'Punho',
